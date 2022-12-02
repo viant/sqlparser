@@ -3,7 +3,7 @@ package sqlparser
 import (
 	"fmt"
 	"github.com/viant/parsly"
-	"github.com/viant/sqlx/metadata/ast/query"
+	"github.com/viant/sqlparser/query"
 )
 
 func Parse(cursor *parsly.Cursor, dest interface{}) error {

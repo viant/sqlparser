@@ -2,9 +2,9 @@ package sqlparser
 
 import (
 	"github.com/viant/parsly"
-	del "github.com/viant/sqlx/metadata/ast/delete"
-	"github.com/viant/sqlx/metadata/ast/expr"
-	"github.com/viant/sqlx/metadata/ast/query"
+	del "github.com/viant/sqlparser/delete"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/query"
 )
 
 func ParseDelete(SQL string) (*del.Statement, error) {

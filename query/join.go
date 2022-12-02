@@ -1,8 +1,8 @@
 package query
 
 import (
-	"github.com/viant/sqlx/metadata/ast/expr"
-	"github.com/viant/sqlx/metadata/ast/node"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/node"
 )
 
 type Join struct {

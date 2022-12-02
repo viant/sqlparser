@@ -1,6 +1,6 @@
 package expr
 
-import "github.com/viant/sqlx/metadata/ast/node"
+import "github.com/viant/sqlparser/node"
 
 type Star struct {
 	X        node.Node

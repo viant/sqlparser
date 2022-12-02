@@ -2,7 +2,7 @@ package sqlparser
 
 import (
 	"github.com/viant/parsly"
-	"github.com/viant/sqlx/metadata/ast/expr"
+	"github.com/viant/sqlparser/expr"
 )
 
 //ParseQualify parses qualify expr

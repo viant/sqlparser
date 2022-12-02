@@ -1,7 +1,7 @@
 package update
 
 import (
-	"github.com/viant/sqlx/metadata/ast/expr"
+	"github.com/viant/sqlparser/expr"
 )
 
 type Statement struct {

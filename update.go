@@ -2,8 +2,8 @@ package sqlparser
 
 import (
 	"github.com/viant/parsly"
-	"github.com/viant/sqlx/metadata/ast/expr"
-	"github.com/viant/sqlx/metadata/ast/update"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/update"
 )
 
 func ParseUpdate(SQL string) (*update.Statement, error) {

@@ -3,7 +3,7 @@ package sqlparser
 import (
 	"github.com/viant/parsly"
 	"github.com/viant/parsly/matcher"
-	smatcher "github.com/viant/sqlx/metadata/ast/matcher"
+	smatcher "github.com/viant/sqlparser/matcher"
 
 	"github.com/viant/parsly/matcher/option"
 )

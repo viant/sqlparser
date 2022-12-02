@@ -1,7 +1,7 @@
 package expr
 
 import (
-	"github.com/viant/sqlx/metadata/ast/node"
+	"github.com/viant/sqlparser/node"
 	"strings"
 )
 

@@ -3,7 +3,7 @@ package sqlparser_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/sqlx/metadata/ast/parser"
+	"github.com/viant/sqlparser"
 	"github.com/viant/toolbox"
 	"testing"
 )
@@ -30,13 +30,13 @@ func TestParseInsert(t *testing.T) {
 
 	//for _, testCase := range testCases[len(testCases)-1:] {
 	for _, testCase := range testCases {
-		update, err := parser.ParseInsert(testCase.SQL)
+		update, err := sqlparser.ParseInsert(testCase.SQL)
 		if !assert.Nil(t, err) {
 			fmt.Printf("%v\n", testCase.SQL)
 			continue
 		}
 
-		actual := parser.Stringify(update)
+		actual := sqlparser.Stringify(update)
 		if !assert.EqualValues(t, testCase.expect, actual) {
 			toolbox.DumpIndent(update, true)
 		}

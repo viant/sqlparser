@@ -2,8 +2,8 @@ package sqlparser
 
 import (
 	"github.com/viant/parsly"
-	"github.com/viant/sqlx/metadata/ast/expr"
-	"github.com/viant/sqlx/metadata/ast/query"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/query"
 )
 
 func parseSelectListItem(cursor *parsly.Cursor, list *query.List) error {

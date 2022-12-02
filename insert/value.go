@@ -1,6 +1,6 @@
 package insert
 
-import "github.com/viant/sqlx/metadata/ast/node"
+import "github.com/viant/sqlparser/node"
 
 type Value struct {
 	Expr     node.Node

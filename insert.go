@@ -2,9 +2,9 @@ package sqlparser
 
 import (
 	"github.com/viant/parsly"
-	"github.com/viant/sqlx/metadata/ast/expr"
-	"github.com/viant/sqlx/metadata/ast/insert"
-	"github.com/viant/sqlx/metadata/ast/node"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/insert"
+	"github.com/viant/sqlparser/node"
 	"strings"
 )
 

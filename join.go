@@ -2,8 +2,8 @@ package sqlparser
 
 import (
 	"github.com/viant/parsly"
-	"github.com/viant/sqlx/metadata/ast/expr"
-	"github.com/viant/sqlx/metadata/ast/query"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/query"
 )
 
 func parseJoins(cursor *parsly.Cursor, join *query.Join, dest *query.Select) error {

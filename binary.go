@@ -3,7 +3,7 @@ package sqlparser
 import (
 	"github.com/viant/parsly"
 	"github.com/viant/parsly/matcher"
-	"github.com/viant/sqlx/metadata/ast/expr"
+	"github.com/viant/sqlparser/expr"
 )
 
 func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) error {

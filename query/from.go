@@ -1,7 +1,7 @@
 package query
 
 import (
-	"github.com/viant/sqlx/metadata/ast/node"
+	"github.com/viant/sqlparser/node"
 )
 
 type From struct {

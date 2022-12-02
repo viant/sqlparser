@@ -1,6 +1,6 @@
 package update
 
-import "github.com/viant/sqlx/metadata/ast/node"
+import "github.com/viant/sqlparser/node"
 
 type Item struct {
 	node.Span
