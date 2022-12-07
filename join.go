@@ -14,7 +14,7 @@ func parseJoins(cursor *parsly.Cursor, join *query.Join, dest *query.Select) err
 
 	hasMatch, err := matchPostFrom(cursor, dest, match)
 	if !hasMatch && err == nil {
-		err = cursor.NewError(joinToken, joinToken, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
+		err = cursor.NewError(joinMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 	}
 
 	return err
@@ -47,13 +47,13 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatch, err
 	if err := parseBinaryExpr(cursor, binary); err != nil {
 		return match, err
 	}
-	match = cursor.MatchAfterOptional(whitespaceMatcher, joinToken, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
+	match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 	if match.Code == parsly.EOF {
 		return match, nil
 	}
 	if match.Code == commentBlock {
 		join.Comments = match.Text(cursor)
-		match = cursor.MatchAfterOptional(whitespaceMatcher, joinToken, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 		if match.Code == parsly.EOF {
 			return match, nil
 		}

@@ -65,13 +65,13 @@ func parseQuery(cursor *parsly.Cursor, dest *query.Select) error {
 
 			dest.Joins = make([]*query.Join, 0)
 
-			match = cursor.MatchAfterOptional(whitespaceMatcher, joinToken, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher)
+			match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 			if match.Code == parsly.EOF {
 				return nil
 			}
 			hasMatch, err := matchPostFrom(cursor, dest, match)
 			if !hasMatch && err == nil {
-				err = cursor.NewError(joinToken, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher)
+				err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 			}
 			if err != nil {
 				return err
@@ -92,7 +92,7 @@ func matchComment(cursor *parsly.Cursor) string {
 
 func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.TokenMatch) (bool, error) {
 	switch match.Code {
-	case joinTokenCode:
+	case joinToken:
 		if err := appendJoin(cursor, match, dest); err != nil {
 			return false, err
 		}

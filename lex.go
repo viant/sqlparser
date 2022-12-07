@@ -44,7 +44,7 @@ const (
 	selectionKind
 	fromKeyword
 	onKeyword
-	joinTokenCode
+	joinToken
 	whereKeyword
 	groupByKeyword
 	havingKeyword
@@ -52,6 +52,12 @@ const (
 	rangeOperator
 	windowTokenCode
 	literalCode
+	keyTokenCode
+	notNullToken
+	createTableToken
+	defaultToken
+	ifNotExistsToken
+	dropTableToken
 	deleteCode
 )
 
@@ -77,11 +83,17 @@ var exceptKeywordMatcher = parsly.NewToken(exceptKeyword, "EXCEPT", matcher.NewF
 var betweenKeywordMatcher = parsly.NewToken(betweenToken, "BETWEEN", matcher.NewFragment("between", &option.Case{}))
 
 var fromKeywordMatcher = parsly.NewToken(fromKeyword, "FROM", matcher.NewFragment("from", &option.Case{}))
-var joinToken = parsly.NewToken(joinTokenCode, "LEFT OUTER JOIN|LEFT JOIN|JOIN", matcher.NewSpacedSet([]string{
+var joinMatcher = parsly.NewToken(joinToken, "LEFT OUTER JOIN|LEFT JOIN|JOIN", matcher.NewSpacedSet([]string{
 	"left outer join",
 	"left join",
 	"inner join",
 	"join",
+}, &option.Case{}))
+
+var keyMatcher = parsly.NewToken(keyTokenCode, "[RANGE|HASH|PRIMARY] KEY", matcher.NewSpacedSet([]string{
+	"range key",
+	"hash key",
+	"primary key",
 }, &option.Case{}))
 
 var onKeywordMatcher = parsly.NewToken(onKeyword, "ON", matcher.NewFragment("on", &option.Case{}))
@@ -119,3 +131,15 @@ var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.Ne
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
 var deleteMatcher = parsly.NewToken(deleteCode, "DELETE", matcher.NewFragmentsFold([]byte("delete")))
+var notNullMatcher = parsly.NewToken(notNullToken, "NOT NULL", matcher.NewSpacedSet([]string{
+	"not null"}, &option.Case{}))
+var ifNotExistsMatcher = parsly.NewToken(ifNotExistsToken, "IF NOT EXISTS", matcher.NewSpacedSet([]string{
+	"if not exists"}, &option.Case{}))
+
+var createTableMatcher = parsly.NewToken(createTableToken, "CREATE TABLE", matcher.NewSpacedSet([]string{
+	"create table"}, &option.Case{}))
+
+var defaultMatcher = parsly.NewToken(defaultToken, "DEFAULT", matcher.NewFragment("default", &option.Case{}))
+
+var dropTableMatcher = parsly.NewToken(dropTableToken, "DROP TABLE", matcher.NewSpacedSet([]string{
+	"drop table"}, &option.Case{}))

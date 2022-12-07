@@ -23,6 +23,11 @@ func TestParseSelect(t *testing.T) {
 				expect:      `SELECT TOUPPER(name) AS Name FROM user u`,
 			},
 			{
+				description: "cast call",
+				SQL:         `SELECT CAST(name AS TEXT) AS Name FROM user u`,
+				expect:      `SELECT CAST(name AS TEXT) AS Name FROM user u`,
+			},
+			{
 				description: "comments",
 				SQL:         `SELECT user.* FROM user u -- extra comments `,
 				expect:      `SELECT user.* FROM user u`,

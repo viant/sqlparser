@@ -10,14 +10,14 @@ import (
 
 func discoverAlias(cursor *parsly.Cursor) string {
 	pos := cursor.Pos
-	match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, asKeywordMatcher, onKeywordMatcher, fromKeywordMatcher, joinToken, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, identifierMatcher)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, asKeywordMatcher, onKeywordMatcher, fromKeywordMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, identifierMatcher)
 	switch match.Code {
 	case asKeyword:
 		match := cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
 		return match.Text(cursor)
 	case identifierCode:
 		return match.Text(cursor)
-	case exceptKeyword, fromKeyword, onKeyword, orderByKeyword, joinTokenCode, whereKeyword, groupByKeyword, havingKeyword, windowTokenCode:
+	case exceptKeyword, fromKeyword, onKeyword, orderByKeyword, joinToken, whereKeyword, groupByKeyword, havingKeyword, windowTokenCode:
 		cursor.Pos = pos
 	}
 	return ""
@@ -33,7 +33,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		orderByKeywordMatcher,
 		asKeywordMatcher,
 		exceptKeywordMatcher,
-		onKeywordMatcher, fromKeywordMatcher, whereKeywordMatcher, joinToken, groupByMatcher, havingKeywordMatcher, windowMatcher, nextMatcher,
+		onKeywordMatcher, fromKeywordMatcher, whereKeywordMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, windowMatcher, nextMatcher,
 		parenthesesMatcher,
 		caseBlockMatcher,
 		starTokenMatcher,
@@ -59,16 +59,9 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		switch match.Code {
 		case parenthesesCode:
 			raw := match.Text(cursor)
-			var args []node.Node
-			if len(raw) > 0 {
-				argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
-				list := query.List{}
-				if err := parseOrderByListItem(argCursor, &list); err != nil {
-					return nil, err
-				}
-				for i := range list {
-					args = append(args, list[i].Expr)
-				}
+			args, err := parseCallArguments(cursor, raw, pos)
+			if err != nil {
+				return nil, err
 			}
 			return &expr.Call{X: selector, Raw: raw, Args: args}, nil
 
@@ -113,10 +106,45 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		}
 		return unary, nil
 
-	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinTokenCode, groupByKeyword, havingKeyword, windowTokenCode, nextCode, commentBlock:
+	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode, commentBlock:
 		cursor.Pos -= pos
 	}
 	return nil, nil
+}
+
+func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node, error) {
+	var args []node.Node
+	if len(raw) > 0 {
+		argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
+		list := query.List{}
+		if err := parseCallArgs(argCursor, &list); err != nil {
+			return nil, err
+		}
+		for i := range list {
+			args = append(args, list[i].Expr)
+		}
+	}
+	return args, nil
+}
+
+func ParseCallExpr(rawExpr string) (*expr.Call, error) {
+	cursor := parsly.NewCursor("", []byte(rawExpr), 0)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)
+	if match.Code != selectorTokenCode {
+		return nil, cursor.NewError(selectorMatcher)
+	}
+	selector := expr.NewSelector(match.Text(cursor))
+	pos := cursor.Pos
+	match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
+	if match.Code != parenthesesCode {
+		return nil, cursor.NewError(parenthesesMatcher)
+	}
+	raw := match.Text(cursor)
+	args, err := parseCallArguments(cursor, raw, pos)
+	if err != nil {
+		return nil, err
+	}
+	return &expr.Call{X: selector, Raw: rawExpr, Args: args}, nil
 }
 
 func parseStarExpr(cursor *parsly.Cursor, selRaw string, selector node.Node) (node.Node, error) {

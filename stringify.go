@@ -3,11 +3,13 @@ package sqlparser
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/sqlparser/column"
 	del "github.com/viant/sqlparser/delete"
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/insert"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
+	"github.com/viant/sqlparser/table"
 	"github.com/viant/sqlparser/update"
 	"strings"
 )
@@ -216,6 +218,38 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		if actual.Comments != "" {
 			builder.WriteString(" " + actual.Comments)
 		}
+	case *table.Create:
+		builder.WriteString("CREATE TABLE ")
+		if actual.IfDoesExists {
+			builder.WriteString("IF NOT EXISTS ")
+		}
+		builder.WriteString(actual.Name)
+		builder.WriteString("(\n")
+		for i, col := range actual.Columns {
+			if i > 0 {
+				builder.WriteString(",\n")
+			}
+			stringify(col, builder)
+		}
+		builder.WriteString(")")
+
+	case *column.Spec:
+		builder.WriteString(actual.Name)
+		builder.WriteString(" ")
+		builder.WriteString(actual.Type)
+		if actual.Key != "" {
+			builder.WriteString(" ")
+			builder.WriteString(actual.Key)
+		}
+		if !actual.Nullable {
+			builder.WriteString(" NOT NULL")
+		}
+		if actual.Default != nil {
+			builder.WriteString(" ")
+			builder.WriteString("DEFAULT ")
+			builder.WriteString(*actual.Default)
+		}
+
 	default:
 		panic(fmt.Sprintf("%T unsupported", n))
 	}

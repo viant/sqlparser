@@ -39,7 +39,7 @@ func parseDelete(stmt *del.Statement, cursor *parsly.Cursor) error {
 }
 
 func buildDeleteTarget(stmt *del.Statement, cursor *parsly.Cursor) (int, error) {
-	matchable := []*parsly.Token{whereKeywordMatcher, joinToken, selectorMatcher}
+	matchable := []*parsly.Token{whereKeywordMatcher, joinMatcher, selectorMatcher}
 
 	var targetData []string
 	lastMatched := parsly.Invalid
@@ -59,7 +59,7 @@ func buildDeleteTarget(stmt *del.Statement, cursor *parsly.Cursor) (int, error) 
 				matchable = matchable[:len(matchable)-1]
 			}
 
-		case joinTokenCode:
+		case joinToken:
 			join := query.NewJoin(matched.Text(cursor))
 			if _, err := parseJoin(cursor, join); err != nil {
 				return lastMatched, err

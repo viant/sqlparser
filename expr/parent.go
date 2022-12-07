@@ -4,6 +4,6 @@ type Parenthesis struct {
 	Raw string
 }
 
-func NewParenthesis(raww string) *Parenthesis {
-	return &Parenthesis{Raw: raww}
+func NewParenthesis(raw string) *Parenthesis {
+	return &Parenthesis{Raw: raw}
 }
