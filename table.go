@@ -4,8 +4,104 @@ import (
 	"fmt"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/column"
+	del "github.com/viant/sqlparser/delete"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/insert"
+	"github.com/viant/sqlparser/node"
+	"github.com/viant/sqlparser/query"
 	"github.com/viant/sqlparser/table"
+	"github.com/viant/sqlparser/update"
 )
+
+//TableName returns main table name
+func TableName(node node.Node) string {
+	switch actual := node.(type) {
+	case *query.Select:
+		return queryTableName(actual)
+	case *insert.Statement:
+		return trimEnclosure(actual.Target.X)
+	case *update.Statement:
+		return trimEnclosure(actual.Target.X)
+	case *del.Statement:
+		return trimEnclosure(actual.Target.X)
+	case *table.Create:
+		return trimEnclosure(actual.Spec.Name)
+	case *table.Drop:
+		return trimEnclosure(actual.Name)
+	}
+	return ""
+}
+
+func queryTableName(sel *query.Select) string {
+	if sel.From.X == nil {
+		return ""
+	}
+	switch actual := sel.From.X.(type) {
+	case *expr.Ident:
+		return actual.Name
+	case *expr.Selector:
+		return trimEnclosure(actual)
+	case *expr.Parenthesis:
+		raw := trimEnclosure(actual.Raw)
+		if sel, _ := ParseQuery(raw); sel != nil {
+			actual.X = sel
+			return TableName(sel)
+		}
+	case *expr.Raw:
+		if actual.X != nil {
+			return TableName(actual.X)
+		}
+	default:
+		panic(fmt.Sprintf("not supported:%T ", actual))
+	}
+	return ""
+}
+
+func trimEnclosure(node node.Node) string {
+	if node == nil {
+		return ""
+	}
+	var name string
+	var ok bool
+	if name, ok = node.(string); !ok {
+		name = Stringify(node)
+	}
+	switch name[0] {
+	case '`', '"', '[', '\'', '(':
+		name = name[1 : len(name)-1]
+	}
+	return name
+}
+
+func ParseDropTable(SQL string) (*table.Drop, error) {
+	result := &table.Drop{}
+	SQL = removeSQLComments(SQL)
+	cursor := parsly.NewCursor("", []byte(SQL), 0)
+	err := parseDropTable(cursor, result)
+	if err != nil {
+		return result, fmt.Errorf("%s", SQL)
+	}
+	return result, err
+}
+
+func parseDropTable(cursor *parsly.Cursor, dest *table.Drop) error {
+	match := cursor.MatchAfterOptional(whitespaceMatcher, dropTableMatcher)
+	if match.Code != dropTableToken {
+		return cursor.NewError(createTableMatcher)
+	}
+	if match = cursor.MatchOne(whitespaceMatcher); match.Code != whitespaceCode {
+		return cursor.NewError(whitespaceMatcher)
+	}
+	if match = cursor.MatchOne(ifExistsMatcher); match.Code == ifExistsToken {
+		dest.IfExists = true
+	}
+	match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+	if match.Code != identifierCode {
+		return cursor.NewError(ifNotExistsMatcher)
+	}
+	dest.Name = match.Text(cursor)
+	return nil
+}
 
 func ParseCreateTable(SQL string) (*table.Create, error) {
 	result := &table.Create{}

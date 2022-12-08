@@ -25,6 +25,8 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		panic("node was nill")
 	}
 	switch actual := n.(type) {
+	case string:
+		builder.WriteString(actual)
 	case *query.Select:
 		builder.WriteString("SELECT ")
 		stringify(actual.List, builder)

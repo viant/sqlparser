@@ -44,6 +44,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		commentBlockMatcher,
 	)
 	pos := cursor.Pos
+
 	switch match.Code {
 	case selectorTokenCode, placeholderTokenCode:
 
@@ -107,7 +108,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		return unary, nil
 
 	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode, commentBlock:
-		cursor.Pos -= pos
+		cursor.Pos = pos
 	}
 	return nil, nil
 }

@@ -52,11 +52,13 @@ const (
 	rangeOperator
 	windowTokenCode
 	literalCode
+	exprToken
 	keyTokenCode
 	notNullToken
 	createTableToken
 	defaultToken
 	ifNotExistsToken
+	ifExistsToken
 	dropTableToken
 	deleteCode
 )
@@ -130,11 +132,16 @@ var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIde
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector())
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
+var exprMatcher = parsly.NewToken(exprToken, ",EXPR", matcher.NewNop())
+
 var deleteMatcher = parsly.NewToken(deleteCode, "DELETE", matcher.NewFragmentsFold([]byte("delete")))
 var notNullMatcher = parsly.NewToken(notNullToken, "NOT NULL", matcher.NewSpacedSet([]string{
 	"not null"}, &option.Case{}))
 var ifNotExistsMatcher = parsly.NewToken(ifNotExistsToken, "IF NOT EXISTS", matcher.NewSpacedSet([]string{
 	"if not exists"}, &option.Case{}))
+
+var ifExistsMatcher = parsly.NewToken(ifExistsToken, "IF EXISTS", matcher.NewSpacedSet([]string{
+	"if exists"}, &option.Case{}))
 
 var createTableMatcher = parsly.NewToken(createTableToken, "CREATE TABLE", matcher.NewSpacedSet([]string{
 	"create table"}, &option.Case{}))

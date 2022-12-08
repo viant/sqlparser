@@ -15,7 +15,7 @@ func ParseQuery(SQL string) (*query.Select, error) {
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
 	err := parseQuery(cursor, result)
 	if err != nil {
-		return result, fmt.Errorf("%s", SQL)
+		return result, fmt.Errorf("%w %s", err, SQL)
 	}
 	return result, err
 }
@@ -50,6 +50,7 @@ func parseQuery(cursor *parsly.Cursor, dest *query.Select) error {
 		}
 
 		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher)
+		pos := cursor.Pos
 		switch match.Code {
 		case fromKeyword:
 			dest.From = query.From{}
@@ -58,13 +59,21 @@ func parseQuery(cursor *parsly.Cursor, dest *query.Select) error {
 			case selectorTokenCode:
 				dest.From.X = expr.NewSelector(match.Text(cursor))
 			case parenthesesCode:
-				dest.From.X = expr.NewRaw(match.Text(cursor))
+				rawNode := expr.NewRaw(match.Text(cursor))
+				dest.From.X = rawNode
+				rawExpr := trimEnclosure(rawNode.Raw)
+				rawParser := parsly.NewCursor(cursor.Path, []byte(rawExpr), pos)
+				subSelect := &query.Select{}
+				if err := parseQuery(rawParser, subSelect); err != nil {
+					return fmt.Errorf("invalid subquery: %w, %s", err, rawExpr)
+				}
+				rawNode.X = subSelect
+
 			}
 			dest.From.Alias = discoverAlias(cursor)
 			dest.From.Comments = matchComment(cursor)
 
 			dest.Joins = make([]*query.Join, 0)
-
 			match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 			if match.Code == parsly.EOF {
 				return nil

@@ -15,13 +15,20 @@ func TestParseSelect(t *testing.T) {
 			description string
 			SQL         string
 			expect      string
+			hasError    bool
 		}{
 
+			{
+				description: "error - extra coma",
+				SQL:         `SELECT TOUPPER(name) AS Name, FROM user u`,
+				hasError:    true,
+			},
 			{
 				description: "fun call",
 				SQL:         `SELECT TOUPPER(name) AS Name FROM user u`,
 				expect:      `SELECT TOUPPER(name) AS Name FROM user u`,
 			},
+
 			{
 				description: "cast call",
 				SQL:         `SELECT CAST(name AS TEXT) AS Name FROM user u`,
@@ -152,7 +159,12 @@ func TestParseSelect(t *testing.T) {
 
 		for _, testCase := range testCases {
 			query, err := ParseQuery(testCase.SQL)
+			if testCase.hasError {
+				assert.NotNilf(t, err, testCase.description)
+				continue
+			}
 			if !assert.Nil(t, err) {
+				fmt.Println(err)
 				fmt.Printf("%v\n", testCase.SQL)
 				continue
 			}

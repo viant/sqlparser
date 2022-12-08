@@ -43,7 +43,13 @@ func parseSelectListItem(cursor *parsly.Cursor, list *query.List) error {
 		}
 		fallthrough
 	case nextCode:
-		return parseSelectListItem(cursor, list)
+		count := len(*list)
+		if err = parseSelectListItem(cursor, list); err != nil {
+			return err
+		}
+		if count == len(*list) {
+			return cursor.NewError(exprMatcher)
+		}
 	}
 	return nil
 }
