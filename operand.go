@@ -99,7 +99,17 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		}
 		return expr.NewStar(selector, comments), err
 	case parenthesesCode:
-		return expr.NewParenthesis(match.Text(cursor)), nil
+		raw := match.Text(cursor)
+		result := expr.NewParenthesis(raw)
+		rawExpr := raw[1 : len(raw)-1]
+		exprCursor := parsly.NewCursor(cursor.Path, []byte(rawExpr), cursor.Pos-len(raw))
+		binary := &expr.Binary{}
+		_ = parseBinaryExpr(exprCursor, binary)
+		result.X = result.X
+		if binary.Y != nil {
+			result.X = binary
+		}
+		return result, nil
 	case notOperator:
 		unary := expr.NewUnary(match.Text(cursor))
 		if unary.X, err = expectOperand(cursor); unary.X == nil || err != nil {
