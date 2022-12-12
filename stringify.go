@@ -42,6 +42,16 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 			builder.WriteString(" WHERE ")
 			stringify(actual.Qualify.X, builder)
 		}
+		if len(actual.GroupBy) > 0 {
+			builder.WriteString(" GROUP BY ")
+			for _, item := range actual.GroupBy {
+				stringify(item, builder)
+			}
+		}
+		if actual.Having != nil {
+			builder.WriteString(" HAVING ")
+			stringify(actual.Having, builder)
+		}
 
 		if len(actual.OrderBy) > 0 {
 			builder.WriteString(" ORDER BY ")
@@ -49,11 +59,16 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				stringify(item, builder)
 			}
 		}
+		if union := actual.Union; union != nil {
+			builder.WriteString(" " + union.Raw + " ")
+			stringify(union.X, builder)
+		}
 
 	case *query.Join:
 		builder.WriteByte(' ')
 		builder.WriteString(actual.Raw)
 		builder.WriteByte(' ')
+
 		stringify(actual.With, builder)
 		if actual.Alias != "" {
 			builder.WriteByte(' ')

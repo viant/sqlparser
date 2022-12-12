@@ -10,14 +10,14 @@ import (
 
 func discoverAlias(cursor *parsly.Cursor) string {
 	pos := cursor.Pos
-	match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, asKeywordMatcher, onKeywordMatcher, fromKeywordMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, identifierMatcher)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, asKeywordMatcher, onKeywordMatcher, fromKeywordMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher, identifierMatcher)
 	switch match.Code {
 	case asKeyword:
 		match := cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
 		return match.Text(cursor)
 	case identifierCode:
 		return match.Text(cursor)
-	case exceptKeyword, fromKeyword, onKeyword, orderByKeyword, joinToken, whereKeyword, groupByKeyword, havingKeyword, windowTokenCode:
+	case exceptKeyword, fromKeyword, onKeyword, orderByKeyword, joinToken, whereKeyword, groupByKeyword, havingKeyword, windowTokenCode, unionKeyword:
 		cursor.Pos = pos
 	}
 	return ""

@@ -61,7 +61,7 @@ func buildDeleteTarget(stmt *del.Statement, cursor *parsly.Cursor) (int, error) 
 
 		case joinToken:
 			join := query.NewJoin(matched.Text(cursor))
-			if _, err := parseJoin(cursor, join); err != nil {
+			if _, err := parseDeleteJoin(cursor, join); err != nil {
 				return lastMatched, err
 			}
 
@@ -124,6 +124,15 @@ func tryParseDeleteItems(cursor *parsly.Cursor) ([]*del.Item, error) {
 		}
 	}
 	return items, nil
+}
+
+func matchComment(cursor *parsly.Cursor) string {
+	match := cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher)
+	if match.Code == commentBlock {
+		return match.Text(cursor)
+	}
+
+	return ""
 }
 
 func tryParseQualify(cursor *parsly.Cursor, lastMatchedCode int) (*expr.Qualify, error) {

@@ -61,6 +61,8 @@ const (
 	ifExistsToken
 	dropTableToken
 	deleteCode
+	withKeyword
+	unionKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -132,6 +134,12 @@ var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIde
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector())
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
+
+var withKeywordMatcher = parsly.NewToken(withKeyword, "WITH", matcher.NewFragment("with", &option.Case{}))
+var unionMatcher = parsly.NewToken(unionKeyword, "UNION|UNION ALL", matcher.NewSpacedSet([]string{
+	"union all",
+	"union",
+}, &option.Case{}))
 var exprMatcher = parsly.NewToken(exprToken, ",EXPR", matcher.NewNop())
 
 var deleteMatcher = parsly.NewToken(deleteCode, "DELETE", matcher.NewFragmentsFold([]byte("delete")))

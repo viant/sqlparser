@@ -19,6 +19,80 @@ func TestParseSelect(t *testing.T) {
 		}{
 
 			{
+				description: "with syntax",
+				SQL: `WITH p AS (SELECT * FROM product), v AS (SELECT * FROM vendor)
+				SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
+				expect: `SELECT p.*, v.* FROM (SELECT * FROM product) p JOIN (SELECT * FROM vendor) v ON p.VENDOR_ID = v.ID`,
+			},
+
+			{
+				description: "group by",
+				SQL:         `SELECT ID, SUM(amount) FROM product u GROUP BY 1`,
+				expect:      `SELECT ID, SUM(amount) FROM product u GROUP BY 1`,
+			},
+
+			{
+				description: "group by",
+				SQL:         `SELECT ID, SUM(amount) FROM product u GROUP BY 1`,
+				expect:      `SELECT ID, SUM(amount) FROM product u GROUP BY 1`,
+			},
+			{
+				description: "group by, having",
+				SQL:         `SELECT ID, SUM(amount) FROM product u GROUP BY 1 HAVING COUNT(DISTINCT zz) > 2`,
+				expect:      `SELECT ID, SUM(amount) FROM product u GROUP BY 1 HAVING COUNT(DISTINCT zz) > 2`,
+			},
+			{
+				description: "union all",
+				SQL:         `SELECT user.* FROM user1 u UNION ALL SELECT user.* FROM user2 u`,
+				expect:      `SELECT user.* FROM user1 u UNION ALL SELECT user.* FROM user2 u`,
+			},
+			{
+				description: "expr with comments",
+				SQL:         `SELECT user.* FROM (SELECT t.* FROM USER t  ) user /* {"Self":{"Holder":"Team", "Child":"ID", "Parent":"MGR_ID" }} */ `,
+				expect:      `SELECT user.* FROM  (SELECT t.* FROM USER t  )  user /* {"Self":{"Holder":"Team", "Child":"ID", "Parent":"MGR_ID" }} */`,
+			},
+
+			{
+				description: "bq table select",
+				SQL:         "SELECT c1 /* comment */, c2 FROM `proj.dataset.table` t",
+				expect:      "SELECT c1 /* comment */, c2 FROM `proj.dataset.table` t",
+			},
+			{
+				description: "start with comments",
+				SQL:         "SELECT t.* /* some comments */ FROM tableX t",
+				expect:      "SELECT t.* /* some comments */ FROM tableX t",
+			},
+
+			{
+				description: "bq table select",
+				SQL:         "SELECT c1 AS a1 , c2 FROM `proj.dataset.table` t",
+				expect:      "SELECT c1 AS a1, c2 FROM `proj.dataset.table` t",
+			},
+
+			{
+				description: "except select",
+				SQL:         "SELECT c1 /* comment */, c2 FROM x t",
+				expect:      "SELECT c1 /* comment */, c2 FROM x t",
+			},
+			{
+				description: "except select",
+				SQL:         "SELECT * EXCEPT c1,c2 FROM x t",
+				expect:      "SELECT * EXCEPT c1, c2 FROM x t",
+			},
+
+			{
+				description: "except select",
+				SQL:         "SELECT t1.* EXCEPT c1,c2, t2.* EXCEPT c3  FROM x t1 JOIN y AS t2 ON t1.ID=t2.ID",
+				expect:      "SELECT t1.* EXCEPT c1, c2, t2.* EXCEPT c3 FROM x t1 JOIN y t2 ON t1.ID = t2.ID",
+			},
+
+			{
+				description: "placeholder",
+				SQL:         `SELECT ISBN, Name FROM Publication t WHERE (ISBN = ?) AND  1=1`,
+				expect:      `SELECT ISBN, Name FROM Publication t WHERE (ISBN = ?) AND 1 = 1`,
+			},
+
+			{
 				description: "error - extra coma",
 				SQL:         `SELECT TOUPPER(name) AS Name, FROM user u`,
 				hasError:    true,
