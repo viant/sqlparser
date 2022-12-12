@@ -28,18 +28,20 @@ func (b *Binary) Parenthesis() *Parenthesis {
 	return p
 }
 
-//HasIdentity returns true if x or y opperand is identity
-func (b *Binary) HasIdentity() bool {
-	return b.Identity() != nil
+//HasIdentifier returns true if x or y opperand is identity
+func (b *Binary) HasIdentifier() bool {
+	return b.Identifier() != nil
 }
 
-func (b *Binary) Identity() node.Node {
+//Identifier returns an identifier node or nil
+func (b *Binary) Identifier() node.Node {
 	if x := Identity(b.X); x != nil {
 		return x
 	}
 	return Identity(b.Y)
 }
 
+//NewBinary returns a binary expr
 func NewBinary(x node.Node) *Binary {
 	return &Binary{X: x}
 }

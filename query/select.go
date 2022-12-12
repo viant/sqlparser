@@ -5,6 +5,7 @@ import (
 )
 
 type (
+	//Select represent a select
 	Select struct {
 		List        List
 		From        From
@@ -21,8 +22,10 @@ type (
 		WithSelects WithSelects
 	}
 
+	//WithSelects represents with selects
 	WithSelects []*WithSelect
-	WithSelect  struct {
+	//WithSelects represents with select
+	WithSelect struct {
 		Raw   string
 		Alias string
 		X     *Select
@@ -35,6 +38,7 @@ type (
 	}
 )
 
+//Select returns with select
 func (w WithSelects) Select(alias string) *WithSelect {
 	for _, candidate := range w {
 		if candidate.Alias == alias {
@@ -44,6 +48,7 @@ func (w WithSelects) Select(alias string) *WithSelect {
 	return nil
 }
 
+//IsNested returns true is select uses nested query
 func (s *Select) IsNested() bool {
 	if s.From.X == nil {
 		return false

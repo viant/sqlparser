@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+//ParseQuery parses query
 func ParseQuery(SQL string) (*query.Select, error) {
 	result := &query.Select{}
 	SQL = removeSQLComments(SQL)
