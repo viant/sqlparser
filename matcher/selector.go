@@ -11,7 +11,7 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 	input := cursor.Input
 	pos := cursor.Pos
 	size := len(input)
-	if startsWithCharacter := IsLetter(input[pos]); startsWithCharacter {
+	if startsWithCharacter := IsLetter(input[pos]); startsWithCharacter || input[pos] == '$' {
 		pos++
 		matched++
 	} else if input[pos] == '[' {

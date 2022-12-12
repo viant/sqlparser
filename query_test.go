@@ -19,6 +19,16 @@ func TestParseSelect(t *testing.T) {
 		}{
 
 			{
+				description: "quoted from expr",
+				SQL:         "SELECT Name,Active FROM `/Records[Active = true]`",
+				expect:      "SELECT Name, Active FROM `/Records[Active = true]`",
+			},
+			{
+				description: "quoted from expr",
+				SQL:         "SELECT * FROM $abc",
+				expect:      "SELECT * FROM $abc",
+			},
+			{
 				description: "with syntax",
 				SQL: `WITH p AS (SELECT * FROM product), v AS (SELECT * FROM vendor)
 				SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
