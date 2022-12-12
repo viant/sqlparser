@@ -39,6 +39,7 @@ func (n *identifier) Match(cursor *parsly.Cursor) (matched int) {
 	return matched
 }
 
+//IsLetter returns true if ltter
 func IsLetter(b byte) bool {
 	if (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') {
 		return false

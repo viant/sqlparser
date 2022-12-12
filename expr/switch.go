@@ -10,6 +10,7 @@ type (
 		Cases []*Case
 	}
 
+	//Case represents a switch case
 	Case struct {
 		X Qualify
 		Y node.Node

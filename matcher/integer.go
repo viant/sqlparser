@@ -7,6 +7,7 @@ import (
 type intMatcher struct {
 }
 
+//Match matches an int
 func (_ *intMatcher) Match(cursor *parsly.Cursor) (matched int) {
 	if cursor.Pos < cursor.InputSize && cursor.Input[cursor.Pos] == '-' {
 		matched++
@@ -32,6 +33,7 @@ func (_ *intMatcher) Match(cursor *parsly.Cursor) (matched int) {
 	return matched
 }
 
+//NewIntMatcher returns an int matcher
 func NewIntMatcher() *intMatcher {
 	return &intMatcher{}
 }

@@ -8,6 +8,7 @@ type stringMatcher struct {
 	quote byte
 }
 
+//Match matches string
 func (m *stringMatcher) Match(cursor *parsly.Cursor) (matched int) {
 	input := cursor.Input
 	inputSize := len(input)
@@ -29,6 +30,7 @@ func (m *stringMatcher) Match(cursor *parsly.Cursor) (matched int) {
 	return 0
 }
 
+//NewStringMatcher returns a string matcher
 func NewStringMatcher(quote byte) *stringMatcher {
 	return &stringMatcher{quote: quote}
 }

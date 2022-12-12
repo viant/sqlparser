@@ -8,6 +8,7 @@ type Raw struct {
 	X   node.Node
 }
 
+//NewRaw create a raw valie
 func NewRaw(raw string) *Raw {
 	return &Raw{Raw: raw}
 }

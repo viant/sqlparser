@@ -8,6 +8,7 @@ type Unary struct {
 	X  node.Node
 }
 
+//NewUnary crates an unary expr
 func NewUnary(op string) *Unary {
 	return &Unary{Op: op}
 }

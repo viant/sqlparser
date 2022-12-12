@@ -24,13 +24,13 @@ type (
 
 	//WithSelects represents with selects
 	WithSelects []*WithSelect
-	//WithSelects represents with select
+	//WithSelects represents WithSelect list
 	WithSelect struct {
 		Raw   string
 		Alias string
 		X     *Select
 	}
-
+	//Union represents an union
 	Union struct {
 		Kind string
 		Raw  string
