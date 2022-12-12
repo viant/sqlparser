@@ -1,5 +1,6 @@
 package column
 
+//Spec represents column specifiction
 type Spec struct {
 	Name            string
 	Comments        string

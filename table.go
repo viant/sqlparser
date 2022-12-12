@@ -73,6 +73,7 @@ func trimEnclosure(node node.Node) string {
 	return name
 }
 
+//ParseDropTable parses drop table
 func ParseDropTable(SQL string) (*table.Drop, error) {
 	result := &table.Drop{}
 	SQL = removeSQLComments(SQL)
@@ -103,6 +104,7 @@ func parseDropTable(cursor *parsly.Cursor, dest *table.Drop) error {
 	return nil
 }
 
+//ParseCreateTable parses create table
 func ParseCreateTable(SQL string) (*table.Create, error) {
 	result := &table.Create{}
 	SQL = removeSQLComments(SQL)

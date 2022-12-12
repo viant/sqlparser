@@ -5,11 +5,13 @@ import (
 	"strings"
 )
 
+//Selector represent identifier selector
 type Selector struct {
 	Name string
 	X    node.Node
 }
 
+//NewSelector returns
 func NewSelector(name string) node.Node {
 	part := strings.Index(name, ".")
 	if part == -1 {

@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//ParseInsert Parses INSERT INTO statement
 func ParseInsert(SQL string) (*insert.Statement, error) {
 	result := &insert.Statement{}
 	cursor := parsly.NewCursor("", []byte(SQL), 0)

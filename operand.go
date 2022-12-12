@@ -138,6 +138,7 @@ func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node
 	return args, nil
 }
 
+//ParseCallExpr parses call expression
 func ParseCallExpr(rawExpr string) (*expr.Call, error) {
 	cursor := parsly.NewCursor("", []byte(rawExpr), 0)
 	match := cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)

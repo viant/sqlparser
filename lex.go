@@ -8,6 +8,7 @@ import (
 	"github.com/viant/parsly/matcher/option"
 )
 
+//Token represents a token
 type Token int
 
 const (

@@ -6,6 +6,7 @@ import (
 	"github.com/viant/sqlparser/update"
 )
 
+//ParseUpdate parses update statement
 func ParseUpdate(SQL string) (*update.Statement, error) {
 	result := &update.Statement{}
 	cursor := parsly.NewCursor("", []byte(SQL), 0)

@@ -7,13 +7,14 @@ import (
 	"github.com/viant/sqlparser/query"
 )
 
+//ParseDelete parses DELETE statement
 func ParseDelete(SQL string) (*del.Statement, error) {
 	aStmt := &del.Statement{}
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
-	return aStmt, parseDelete(aStmt, cursor)
+	return aStmt, parseDelete(cursor, aStmt)
 }
 
-func parseDelete(stmt *del.Statement, cursor *parsly.Cursor) error {
+func parseDelete(cursor *parsly.Cursor, stmt *del.Statement) error {
 	matched := cursor.MatchAfterOptional(whitespaceMatcher, deleteMatcher)
 	if matched.Code != deleteCode {
 		return cursor.NewError(deleteMatcher)

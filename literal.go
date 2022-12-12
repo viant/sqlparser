@@ -5,10 +5,12 @@ import (
 	"github.com/viant/sqlparser/expr"
 )
 
+//ParseLiteral parses literal
 func ParseLiteral(cursor *parsly.Cursor) (*expr.Literal, error) {
 	return parseLiteral(cursor, true)
 }
 
+//TryParseLiteral tries to parse literal
 func TryParseLiteral(cursor *parsly.Cursor) (*expr.Literal, error) {
 	return parseLiteral(cursor, false)
 }

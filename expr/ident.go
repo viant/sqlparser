@@ -2,6 +2,7 @@ package expr
 
 import "github.com/viant/sqlparser/node"
 
+//Ident represent an identifier
 type Ident struct {
 	Name string
 }

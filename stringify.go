@@ -14,6 +14,7 @@ import (
 	"strings"
 )
 
+//Stringify stringifies node
 func Stringify(n node.Node) string {
 	builder := new(bytes.Buffer)
 	stringify(n, builder)

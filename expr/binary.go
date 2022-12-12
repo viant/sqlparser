@@ -4,6 +4,7 @@ import (
 	"github.com/viant/sqlparser/node"
 )
 
+//Binary represents binary expr
 type Binary struct {
 	X, Y node.Node
 	Op   string
