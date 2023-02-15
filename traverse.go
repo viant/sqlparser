@@ -19,7 +19,7 @@ func Traverse(n node.Node, visitor func(n node.Node) bool) {
 
 func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 	if n == nil {
-		panic("node was nill")
+		return false
 	}
 
 	if !visitor(n) {
