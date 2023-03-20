@@ -8,5 +8,6 @@ type Spec struct {
 	Nullable        bool
 	Default         *string
 	Key             string
+	Tag             string
 	IsAutoincrement bool
 }

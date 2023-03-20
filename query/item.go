@@ -12,6 +12,7 @@ type Item struct {
 	DataType  string
 	Raw       string
 	Meta      interface{}
+	Tag       string
 	Direction string
 }
 
