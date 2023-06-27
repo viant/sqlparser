@@ -157,7 +157,7 @@ func parseColumnSpec(dest *table.Create, match *parsly.TokenMatch, cursor *parsl
 		if err != nil {
 			return err
 		}
-		col.Type = Stringify(node)
+		col.DataType = Stringify(node)
 
 		match = cursor.MatchAfterOptional(whitespaceMatcher, keyMatcher)
 		if match.Code == keyTokenCode {

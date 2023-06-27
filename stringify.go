@@ -254,7 +254,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 	case *column.Spec:
 		builder.WriteString(actual.Name)
 		builder.WriteString(" ")
-		builder.WriteString(actual.Type)
+		builder.WriteString(actual.DataType)
 		if actual.Key != "" {
 			builder.WriteString(" ")
 			builder.WriteString(actual.Key)
