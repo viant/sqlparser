@@ -254,12 +254,12 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 	case *column.Spec:
 		builder.WriteString(actual.Name)
 		builder.WriteString(" ")
-		builder.WriteString(actual.DataType)
+		builder.WriteString(actual.Type)
 		if actual.Key != "" {
 			builder.WriteString(" ")
 			builder.WriteString(actual.Key)
 		}
-		if !actual.Nullable {
+		if !actual.IsNullable {
 			builder.WriteString(" NOT NULL")
 		}
 		if actual.Default != nil {

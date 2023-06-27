@@ -13,11 +13,12 @@ type Spec struct {
 	Except          []string
 	Expression      string
 	Comments        string
-	DataType        string
-	Type            reflect.Type `json:"-"`
-	Length          int
-	Nullable        bool
+	Type            string
+	RawType         reflect.Type `json:"-"`
+	Length          *int64
+	IsUnique        bool
+	IsNullable      bool
+	IsAutoincrement bool
 	Default         *string
 	Tag             string
-	IsAutoincrement bool
 }

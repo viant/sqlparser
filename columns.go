@@ -1,11 +1,14 @@
 package sqlparser
 
-import "github.com/viant/sqlparser/query"
+import (
+	"github.com/viant/sqlparser/query"
+	"strings"
+)
 
 //Columns represens column
 type Columns []*Column
 
-//Index indexes column by alias or name or expr if not empty respectively
+//Index indexes column by first non-empty alias or name or expr respectively
 func (c Columns) Index() map[string]*Column {
 	var result = make(map[string]*Column)
 	for i, item := range c {
@@ -19,6 +22,17 @@ func (c Columns) Index() map[string]*Column {
 		}
 		if item.Expression != "" {
 			result[item.Expression] = c[i]
+		}
+	}
+	return result
+}
+
+//ByName indexes column by name
+func (c Columns) ByName() map[string]*Column {
+	var result = make(map[string]*Column)
+	for i, item := range c {
+		if item.Name != "" {
+			result[item.Name] = c[i]
 		}
 	}
 	return result
@@ -43,6 +57,13 @@ func (c Columns) StarExpr(namespace string) *Column {
 		}
 	}
 	return nil
+}
+
+func (c Columns) IsStarExpr() bool {
+	if len(c) != 1 {
+		return false
+	}
+	return strings.HasSuffix(c[0].Expression, "*")
 }
 
 //NewColumns creates a columns

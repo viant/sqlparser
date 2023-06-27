@@ -157,14 +157,14 @@ func parseColumnSpec(dest *table.Create, match *parsly.TokenMatch, cursor *parsl
 		if err != nil {
 			return err
 		}
-		col.DataType = Stringify(node)
+		col.Type = Stringify(node)
 
 		match = cursor.MatchAfterOptional(whitespaceMatcher, keyMatcher)
 		if match.Code == keyTokenCode {
 			col.Key = match.Text(cursor)
 		}
 		match = cursor.MatchAfterOptional(whitespaceMatcher, notNullMatcher)
-		col.Nullable = match.Code != notNullToken
+		col.IsNullable = match.Code != notNullToken
 
 		match = cursor.MatchAfterOptional(whitespaceMatcher, defaultMatcher)
 		if match.Code == defaultToken {

@@ -32,11 +32,11 @@ func NewColumn(item *query.Item) *Column {
 			name = params[0]
 			item.Tag = params[1]
 		}
-		return &Column{Name: name, Alias: item.Alias, DataType: item.DataType, Tag: item.Tag, Expression: call}
+		return &Column{Name: name, Alias: item.Alias, Type: item.DataType, Tag: item.Tag, Expression: call}
 	case *expr.Ident:
-		return &Column{Name: actual.Name, Alias: item.Alias, DataType: item.DataType, Tag: item.Tag}
+		return &Column{Name: actual.Name, Alias: item.Alias, Type: item.DataType, Tag: item.Tag}
 	case *expr.Selector:
-		return &Column{Name: Stringify(actual.X), Namespace: actual.Name, DataType: item.DataType, Alias: item.Alias, Tag: item.Tag}
+		return &Column{Name: Stringify(actual.X), Namespace: actual.Name, Type: item.DataType, Alias: item.Alias, Tag: item.Tag}
 	case *expr.Star:
 		switch star := actual.X.(type) {
 		case *expr.Ident:
@@ -45,15 +45,15 @@ func NewColumn(item *query.Item) *Column {
 			return &Column{Namespace: star.Name, Except: actual.Except, Comments: actual.Comments, Tag: item.Tag, Expression: Stringify(star)}
 		}
 	case *expr.Literal:
-		return &Column{Name: "", Alias: item.Alias, DataType: actual.Kind, Tag: item.Tag, Expression: actual.Value}
+		return &Column{Name: "", Alias: item.Alias, Type: actual.Kind, Tag: item.Tag, Expression: actual.Value}
 	case *expr.Binary:
 		expression := Stringify(actual)
 		if item.DataType == "" || (strings.Contains(expression, "+") || strings.Contains(expression, "-") || strings.Contains(expression, "/") || strings.Contains(expression, "*")) {
 			item.DataType = "float64"
 		}
-		return &Column{Alias: item.Alias, DataType: item.DataType, Tag: item.Tag, Expression: expression}
+		return &Column{Alias: item.Alias, Type: item.DataType, Tag: item.Tag, Expression: expression}
 	case *expr.Parenthesis:
-		return &Column{Name: Stringify(actual), Alias: item.Alias, DataType: item.DataType, Tag: item.Tag, Expression: actual.Raw}
+		return &Column{Name: Stringify(actual), Alias: item.Alias, Type: item.DataType, Tag: item.Tag, Expression: actual.Raw}
 	}
 	return &Column{Name: item.Raw, Expression: Stringify(item.Expr), Alias: item.Alias, Comments: item.Comments}
 }
