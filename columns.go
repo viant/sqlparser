@@ -38,6 +38,17 @@ func (c Columns) ByName() map[string]*Column {
 	return result
 }
 
+//ByLowerCasedName indexes column by lower cased name
+func (c Columns) ByLowerCasedName() map[string]*Column {
+	var result = make(map[string]*Column)
+	for i, item := range c {
+		if item.Name != "" {
+			result[strings.ToLower(item.Name)] = c[i]
+		}
+	}
+	return result
+}
+
 //Namespace returns namespace column
 func (c Columns) Namespace(namespace string) Columns {
 	var result = Columns{}

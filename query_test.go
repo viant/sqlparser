@@ -1,9 +1,9 @@
 package sqlparser
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
 	"testing"
 )
 
@@ -255,7 +255,8 @@ func TestParseSelect(t *testing.T) {
 
 			actual := Stringify(query)
 			if !assert.EqualValues(t, testCase.expect, actual) {
-				toolbox.DumpIndent(query, true)
+				data, _ := json.Marshal(query)
+				fmt.Printf("%s\n", data)
 			}
 		}
 	}

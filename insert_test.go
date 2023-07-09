@@ -1,10 +1,10 @@
 package sqlparser_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/sqlparser"
-	"github.com/viant/toolbox"
 	"testing"
 )
 
@@ -38,7 +38,8 @@ func TestParseInsert(t *testing.T) {
 
 		actual := sqlparser.Stringify(update)
 		if !assert.EqualValues(t, testCase.expect, actual) {
-			toolbox.DumpIndent(update, true)
+			data, _ := json.Marshal(update)
+			fmt.Printf("%s\n", data)
 		}
 	}
 

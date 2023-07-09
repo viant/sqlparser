@@ -1,9 +1,9 @@
 package sqlparser
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
 	"testing"
 )
 
@@ -44,7 +44,8 @@ PRICE float)`,
 			}
 			actual := Stringify(table)
 			if !assert.EqualValues(t, testCase.expect, actual) {
-				toolbox.DumpIndent(table, true)
+				data, _ := json.Marshal(table)
+				fmt.Printf("%s\n", data)
 			}
 		}
 	}
