@@ -7,10 +7,26 @@ import (
 	"strings"
 )
 
-//Column represent column
+// Column represent column
 type Column column.Spec
 
+func (c *Column) Identity() string {
+	if c.Alias != "" {
+		return c.Alias
+	}
+	return c.Name
+}
+
 func NewColumn(item *query.Item) *Column {
+	column := newColumn(item)
+	if column.Comments == "" {
+		column.Comments = item.Comments
+	}
+	column.Tag = item.Tag
+	return column
+}
+
+func newColumn(item *query.Item) *Column {
 	switch actual := item.Expr.(type) {
 	case *expr.Call:
 		call := Stringify(actual)
