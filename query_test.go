@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -18,6 +19,11 @@ func TestParseSelect(t *testing.T) {
 			hasError    bool
 		}{
 
+			{
+				description: "criteria with  expr",
+				SQL:         "SELECT Name FROM BAR WHERE ${predicate}",
+				expect:      "SELECT Name FROM BAR WHERE ${predicate}",
+			},
 			{
 				description: "quoted from expr",
 				SQL:         "SELECT Name,Active FROM `/Records[Active = true]`",
@@ -239,6 +245,12 @@ func TestParseSelect(t *testing.T) {
 				SQL:         "SELECT * FROM tab1 t1 /* my comment */ JOIN tab2 t2  ON t1.ID = t2.ID ",
 				expect:      "SELECT * FROM tab1 t1 /* my comment */ JOIN tab2 t2 ON t1.ID = t2.ID",
 			},
+
+			{
+				description: "criteria with additional expr",
+				SQL:         "SELECT Name FROM BAR WHERE 1 = 1 ${expr}",
+				expect:      "SELECT Name FROM BAR WHERE 1 = 1 ${expr}",
+			},
 		}
 
 		for _, testCase := range testCases {
@@ -253,7 +265,7 @@ func TestParseSelect(t *testing.T) {
 				continue
 			}
 
-			actual := Stringify(query)
+			actual := strings.TrimSpace(Stringify(query))
 			if !assert.EqualValues(t, testCase.expect, actual) {
 				data, _ := json.Marshal(query)
 				fmt.Printf("%s\n", data)

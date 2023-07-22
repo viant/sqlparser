@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-//Stringify stringifies node
+// Stringify stringifies node
 func Stringify(n node.Node) string {
 	builder := new(bytes.Buffer)
 	stringify(n, builder)
@@ -149,7 +149,10 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		}
 	case *expr.Binary:
 		stringify(actual.X, builder)
-		builder.WriteString(" " + actual.Op + " ")
+		builder.WriteString(" ")
+		if actual.Op != "" {
+			builder.WriteString(actual.Op + " ")
+		}
 		if actual.Y != nil {
 			stringify(actual.Y, builder)
 		}

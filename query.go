@@ -9,11 +9,12 @@ import (
 	"strings"
 )
 
-//ParseQuery parses query
+// ParseQuery parses query
 func ParseQuery(SQL string) (*query.Select, error) {
 	result := &query.Select{}
 	SQL = removeSQLComments(SQL)
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
+
 	err := parseQuery(cursor, result)
 	if err != nil {
 		return result, fmt.Errorf("%w, %s, ", err, SQL)

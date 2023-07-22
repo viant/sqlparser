@@ -5,29 +5,19 @@ import (
 	"strings"
 )
 
-//Columns represens column
+// Columns represens column
 type Columns []*Column
 
-//Index indexes column by first non-empty alias or name or expr respectively
+// Index indexes column by first non-empty alias or name or expr respectively
 func (c Columns) Index() map[string]*Column {
 	var result = make(map[string]*Column)
 	for i, item := range c {
-		if item.Alias != "" {
-			result[item.Alias] = c[i]
-			continue
-		}
-		if item.Name != "" {
-			result[item.Name] = c[i]
-			continue
-		}
-		if item.Expression != "" {
-			result[item.Expression] = c[i]
-		}
+		result[item.Identity()] = c[i]
 	}
 	return result
 }
 
-//ByName indexes column by name
+// ByName indexes column by name
 func (c Columns) ByName() map[string]*Column {
 	var result = make(map[string]*Column)
 	for i, item := range c {
@@ -38,7 +28,7 @@ func (c Columns) ByName() map[string]*Column {
 	return result
 }
 
-//ByLowerCasedName indexes column by lower cased name
+// ByLowerCasedName indexes column by lower cased name
 func (c Columns) ByLowerCasedName() map[string]*Column {
 	var result = make(map[string]*Column)
 	for i, item := range c {
@@ -49,7 +39,7 @@ func (c Columns) ByLowerCasedName() map[string]*Column {
 	return result
 }
 
-//Namespace returns namespace column
+// Namespace returns namespace column
 func (c Columns) Namespace(namespace string) Columns {
 	var result = Columns{}
 	for i, item := range c {
@@ -60,7 +50,7 @@ func (c Columns) Namespace(namespace string) Columns {
 	return result
 }
 
-//StarExpr returns star expr
+// StarExpr returns star expr
 func (c Columns) StarExpr(namespace string) *Column {
 	for _, item := range c {
 		if item.Name == "*" && (item.Namespace == namespace || namespace == "") {
@@ -77,7 +67,7 @@ func (c Columns) IsStarExpr() bool {
 	return strings.HasSuffix(c[0].Expression, "*")
 }
 
-//NewColumns creates a columns
+// NewColumns creates a columns
 func NewColumns(list query.List) Columns {
 	var result Columns
 	if len(list) == 0 {
