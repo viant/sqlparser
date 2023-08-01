@@ -4,7 +4,9 @@ import (
 	"github.com/viant/parsly"
 )
 
-type selector struct{}
+type selector struct {
+	allowsDashes bool
+}
 
 //Match matches a string
 func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
@@ -49,11 +51,19 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 				return matched
 			}
 			return matched
+
+		case '-':
+			if !n.allowsDashes {
+				return matched
+			}
+
+			matched++
 		default:
 			if IsLetter(input[i]) {
 				matched++
 				continue
 			}
+
 			return matched
 		}
 	}
@@ -62,6 +72,8 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 }
 
 //NewSelector creates a selector matcher
-func NewSelector() *selector {
-	return &selector{}
+func NewSelector(allowDashes bool) parsly.Matcher {
+	return &selector{
+		allowsDashes: allowDashes,
+	}
 }

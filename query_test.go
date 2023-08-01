@@ -251,8 +251,20 @@ func TestParseSelect(t *testing.T) {
 				SQL:         "SELECT Name FROM BAR WHERE 1 = 1 ${expr}",
 				expect:      "SELECT Name FROM BAR WHERE 1 = 1 ${expr}",
 			},
+			{
+				description: "",
+				expect:      `SELECT ID, Name, Price FROM dataset-name.abc.table-name v GROUP BY 1, 2`,
+				SQL: `
+                           select ID,
+                                  Name,
+                                  Price 
+                           from dataset-name.abc.table-name v
+                           group by 1, 2
+                       `,
+			},
 		}
 
+		//for _, testCase := range testCases[len(testCases)-1:] {
 		for _, testCase := range testCases {
 			query, err := ParseQuery(testCase.SQL)
 			if testCase.hasError {

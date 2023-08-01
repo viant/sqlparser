@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/stretchr/testify v1.8.1
-	github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f
+	github.com/viant/parsly v0.2.0
 )
 
 require (
@@ -12,5 +12,3 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/viant/parsly => /Users/awitas/go/src/github.com/viant/parsly

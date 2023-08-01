@@ -90,9 +90,9 @@ beginMatch:
 		switch match.Code {
 		case fromKeyword:
 			dest.From = query.From{}
-			match = cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher, parenthesesMatcher)
+			match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher, parenthesesMatcher)
 			switch match.Code {
-			case selectorTokenCode:
+			case tableSelectorTokenCode:
 				identityOrAlias := match.Text(cursor)
 				withSelect := dest.WithSelects.Select(identityOrAlias)
 				if withSelect != nil {

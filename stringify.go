@@ -45,7 +45,10 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		}
 		if len(actual.GroupBy) > 0 {
 			builder.WriteString(" GROUP BY ")
-			for _, item := range actual.GroupBy {
+			for i, item := range actual.GroupBy {
+				if i != 0 {
+					builder.WriteString(", ")
+				}
 				stringify(item, builder)
 			}
 		}

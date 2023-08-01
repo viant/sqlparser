@@ -39,6 +39,7 @@ const (
 	insertValuesKeyword
 	placeholderTokenCode
 	selectorTokenCode
+	tableSelectorTokenCode
 	asKeyword
 	selectionKindCode
 	exceptKeyword
@@ -132,7 +133,9 @@ var intLiteralMatcher = parsly.NewToken(intLiteral, `INT`, smatcher.NewIntMatche
 var numericLiteralMatcher = parsly.NewToken(numericLiteral, `NUMERIC`, matcher.NewNumber())
 
 var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIdentifier())
-var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector())
+var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector(false))
+var tableMatcher = parsly.NewToken(tableSelectorTokenCode, "TABLE MATCHER", smatcher.NewSelector(true))
+
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
 
