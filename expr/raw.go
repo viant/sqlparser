@@ -2,13 +2,14 @@ package expr
 
 import "github.com/viant/sqlparser/node"
 
-//Raw represetns a raw expr
+// Raw represetns a raw expr
 type Raw struct {
-	Raw string
-	X   node.Node
+	Raw      string
+	X        node.Node
+	Unparsed string
 }
 
-//NewRaw create a raw valie
+// NewRaw create a raw valie
 func NewRaw(raw string) *Raw {
 	return &Raw{Raw: raw}
 }

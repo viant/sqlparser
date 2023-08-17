@@ -103,6 +103,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		result := expr.NewParenthesis(raw)
 		rawExpr := raw[1 : len(raw)-1]
 		exprCursor := parsly.NewCursor(cursor.Path, []byte(rawExpr), cursor.Pos-len(raw))
+		exprCursor.OnError = cursor.OnError
 		binary := &expr.Binary{}
 		_ = parseBinaryExpr(exprCursor, binary)
 		result.X = result.X
@@ -116,7 +117,6 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 			return nil, cursor.NewError(selectorMatcher)
 		}
 		return unary, nil
-
 	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode, commentBlock:
 		cursor.Pos = pos
 	}
@@ -127,6 +127,7 @@ func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node
 	var args []node.Node
 	if len(raw) > 0 {
 		argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
+		argCursor.OnError = cursor.OnError
 		list := query.List{}
 		if err := parseCallArgs(argCursor, &list); err != nil {
 			return nil, err
@@ -138,7 +139,7 @@ func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node
 	return args, nil
 }
 
-//ParseCallExpr parses call expression
+// ParseCallExpr parses call expression
 func ParseCallExpr(rawExpr string) (*expr.Call, error) {
 	cursor := parsly.NewCursor("", []byte(rawExpr), 0)
 	match := cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)

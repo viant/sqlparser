@@ -114,11 +114,11 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 			builder.WriteString(actual.Comments)
 
 		}
-
 	case *expr.Raw:
 		builder.WriteString(" ")
 		builder.WriteString(actual.Raw)
 		builder.WriteString(" ")
+		builder.WriteString(actual.Unparsed)
 	case *query.From:
 		if actual.X == nil {
 			return
@@ -126,6 +126,11 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		stringify(actual.X, builder)
 		if actual.Alias != "" {
 			builder.WriteString(" " + actual.Alias)
+		}
+
+		if actual.Unparsed != "" {
+			builder.WriteString(" ")
+			builder.WriteString(actual.Unparsed)
 		}
 
 		if actual.Comments != "" {
@@ -161,6 +166,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		}
 	case expr.Raw:
 		builder.WriteString(actual.Raw)
+		builder.WriteString(actual.Unparsed)
 	case *expr.Ident:
 		builder.WriteString(actual.Name)
 	case *expr.Call:

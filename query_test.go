@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/parsly"
+	"github.com/viant/sqlparser/query"
 	"strings"
 	"testing"
 )
@@ -17,6 +19,7 @@ func TestParseSelect(t *testing.T) {
 			SQL         string
 			expect      string
 			hasError    bool
+			options     []Option
 		}{
 
 			{
@@ -262,11 +265,36 @@ func TestParseSelect(t *testing.T) {
                            group by 1, 2
                        `,
 			},
+			{
+				description: "",
+				SQL:         `select agegroup_id, name from (select id agegroup_id, name from CI_AGEGROUP) v #if($Has.AgeIncl)  where $criteria.In("v.agegroup_id", $AgeIncl) #end `,
+				expect:      `SELECT agegroup_id, name FROM  (select id agegroup_id, name from CI_AGEGROUP)  v #if($Has.AgeIncl)  where $criteria.In("v.agegroup_id", $AgeIncl) #end`,
+				options: []Option{
+					WithErrorHandler(func(err error, cur *parsly.Cursor, destNode interface{}) error {
+						fromNode, ok := destNode.(*query.From)
+						if !ok {
+							return err
+						}
+						input := string(cur.Input[cur.Pos:])
+						if strings.HasPrefix(input, "#if") {
+							index := strings.LastIndex(input, "#end")
+							if index == -1 {
+								return err
+							}
+							input = input[:index+4]
+							fromNode.Unparsed = input + " "
+							cur.Pos += index + 4
+							return nil
+						}
+						return err
+					}),
+				},
+			},
 		}
 
-		//for _, testCase := range testCases[len(testCases)-1:] {
-		for _, testCase := range testCases {
-			query, err := ParseQuery(testCase.SQL)
+		for _, testCase := range testCases[len(testCases)-1:] {
+			//for _, testCase := range testCases {
+			query, err := ParseQuery(testCase.SQL, testCase.options...)
 			if testCase.hasError {
 				assert.NotNilf(t, err, testCase.description)
 				continue

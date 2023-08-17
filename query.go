@@ -10,11 +10,12 @@ import (
 )
 
 // ParseQuery parses query
-func ParseQuery(SQL string) (*query.Select, error) {
+func ParseQuery(SQL string, opts ...Option) (*query.Select, error) {
+	options := newOptions(opts)
 	result := &query.Select{}
 	SQL = removeSQLComments(SQL)
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
-
+	cursor.OnError = options.onError
 	err := parseQuery(cursor, result)
 	if err != nil {
 		return result, fmt.Errorf("%w, %s, ", err, SQL)
@@ -67,6 +68,7 @@ beginMatch:
 		withSelect.Raw = match.Text(cursor)
 		SQL := withSelect.Raw[1 : len(withSelect.Raw)-1]
 		subCursor := parsly.NewCursor(cursor.Path, []byte(SQL), pos)
+		subCursor.OnError = cursor.OnError
 		if err := parseQuery(subCursor, withSelect.X); err != nil {
 			return err
 		}
@@ -107,6 +109,7 @@ beginMatch:
 				dest.From.X = rawNode
 				rawExpr := trimEnclosure(rawNode.Raw)
 				rawParser := parsly.NewCursor(cursor.Path, []byte(rawExpr), pos)
+				rawParser.OnError = cursor.OnError
 				subSelect := &query.Select{}
 				if err := parseQuery(rawParser, subSelect); err != nil {
 					return fmt.Errorf("invalid subquery: %w, %s", err, rawExpr)
@@ -127,9 +130,22 @@ beginMatch:
 			if match.Code == parsly.EOF {
 				return nil
 			}
+
 			hasMatch, err := matchPostFrom(cursor, dest, match)
 			if !hasMatch && err == nil {
-				err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+				if cursor.OnError != nil {
+					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					if err = cursor.OnError(err, cursor, &dest.From); err != nil {
+						return err
+					}
+					match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					if match.Code == parsly.EOF {
+						return nil
+					}
+
+				} else {
+					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+				}
 			}
 			if err != nil {
 				return err

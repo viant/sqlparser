@@ -38,7 +38,7 @@ type (
 	}
 )
 
-//Select returns with select
+// Select returns with select
 func (w WithSelects) Select(alias string) *WithSelect {
 	for _, candidate := range w {
 		if candidate.Alias == alias {
@@ -48,7 +48,7 @@ func (w WithSelects) Select(alias string) *WithSelect {
 	return nil
 }
 
-//IsNested returns true is select uses nested query
+// IsNested returns true is select uses nested query
 func (s *Select) IsNested() bool {
 	if s.From.X == nil {
 		return false
