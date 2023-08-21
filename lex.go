@@ -8,7 +8,7 @@ import (
 	"github.com/viant/parsly/matcher/option"
 )
 
-//Token represents a token
+// Token represents a token
 type Token int
 
 const (
@@ -91,6 +91,7 @@ var betweenKeywordMatcher = parsly.NewToken(betweenToken, "BETWEEN", matcher.New
 var fromKeywordMatcher = parsly.NewToken(fromKeyword, "FROM", matcher.NewFragment("from", &option.Case{}))
 var joinMatcher = parsly.NewToken(joinToken, "LEFT OUTER JOIN|LEFT JOIN|JOIN", matcher.NewSpacedSet([]string{
 	"left outer join",
+	"cross join",
 	"left join",
 	"inner join",
 	"join",
