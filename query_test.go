@@ -290,9 +290,15 @@ func TestParseSelect(t *testing.T) {
 					}),
 				},
 			},
+
+			{
+				description: "",
+				SQL:         `SELECT col1, col2 FROM table1 t, UNNEST(b) v`,
+				expect:      `SELECT col1, col2 FROM table1 t , UNNEST(b) v`,
+			},
 		}
 
-		for _, testCase := range testCases[len(testCases)-1:] {
+		for _, testCase := range testCases {
 			//for _, testCase := range testCases {
 			query, err := ParseQuery(testCase.SQL, testCase.options...)
 			if testCase.hasError {

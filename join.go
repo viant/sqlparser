@@ -6,13 +6,19 @@ import (
 	"github.com/viant/sqlparser/query"
 )
 
-func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select) error {
-	match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, selectorMatcher)
+func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expectOn bool) error {
+	match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, exprMatcher, selectorMatcher)
 	switch match.Code {
 	case parenthesesCode:
 		join.With = expr.NewRaw(match.Text(cursor))
 	case selectorTokenCode:
 		identityOrAlias := match.Text(cursor)
+
+		match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
+		if match.Code == parenthesesCode {
+			identityOrAlias += match.Text(cursor)
+		}
+
 		withSelect := dest.WithSelects.Select(identityOrAlias)
 		if withSelect != nil {
 			join.With = expr.NewParenthesis(withSelect.Raw)
@@ -32,14 +38,16 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select) erro
 	}
 	switch match.Code {
 	case onKeyword:
+		binary := &expr.Binary{}
+		join.On = &expr.Qualify{}
+		join.On.X = binary
+		if err := parseBinaryExpr(cursor, binary); err != nil {
+			return err
+		}
 	default:
-		return cursor.NewError(onKeywordMatcher)
-	}
-	binary := &expr.Binary{}
-	join.On = &expr.Qualify{}
-	join.On.X = binary
-	if err := parseBinaryExpr(cursor, binary); err != nil {
-		return err
+		if expectOn {
+			return cursor.NewError(onKeywordMatcher)
+		}
 	}
 	match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 	if match.Code == parsly.EOF {
@@ -102,10 +110,11 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 	return match, nil
 }
 
-func appendJoin(cursor *parsly.Cursor, match *parsly.TokenMatch, dest *query.Select) error {
+func appendJoin(cursor *parsly.Cursor, match *parsly.TokenMatch, dest *query.Select, expectOn bool) error {
 	join := query.NewJoin(match.Text(cursor))
+
 	dest.Joins = append(dest.Joins, join)
-	if err := parseJoin(cursor, join, dest); err != nil {
+	if err := parseJoin(cursor, join, dest, expectOn); err != nil {
 		return err
 	}
 	return nil

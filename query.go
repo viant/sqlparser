@@ -126,7 +126,7 @@ beginMatch:
 
 			dest.Joins = make([]*query.Join, 0)
 
-			match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+			match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 			if match.Code == parsly.EOF {
 				return nil
 			}
@@ -158,8 +158,14 @@ beginMatch:
 func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.TokenMatch) (bool, error) {
 
 	switch match.Code {
+	case nextCode:
+
+		if err := appendJoin(cursor, match, dest, false); err != nil {
+			return false, err
+		}
+
 	case joinToken:
-		if err := appendJoin(cursor, match, dest); err != nil {
+		if err := appendJoin(cursor, match, dest, true); err != nil {
 			return false, err
 		}
 	case whereKeyword:

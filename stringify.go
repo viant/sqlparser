@@ -81,8 +81,10 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		if actual.Comments != "" {
 			builder.WriteString(" " + actual.Comments)
 		}
-		builder.WriteString(" ON ")
-		stringify(actual.On, builder)
+		if actual.On != nil {
+			builder.WriteString(" ON ")
+			stringify(actual.On, builder)
+		}
 	case *expr.Qualify:
 		stringify(actual.X, builder)
 	case *expr.Literal:
