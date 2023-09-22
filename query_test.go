@@ -296,14 +296,12 @@ func TestParseSelect(t *testing.T) {
 				SQL:         `SELECT col1, col2 FROM table1 t, UNNEST(b) v`,
 				expect:      `SELECT col1, col2 FROM table1 t , UNNEST(b) v`,
 			},
-<<<<<<< HEAD
+
 			{
 				description: "",
 				SQL:         `SELECT               ID,NAME  FROM AAA               ORDER BY 2 DESC, 1 ASC`,
 				expect:      `SELECT ID, NAME FROM AAA ORDER BY 2 DESC, 1 ASC`,
 			},
-=======
->>>>>>> parent of 2f039ea (fix OrderBy)
 		}
 
 		for _, testCase := range testCases {
