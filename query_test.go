@@ -258,12 +258,12 @@ func TestParseSelect(t *testing.T) {
 				description: "",
 				expect:      `SELECT ID, Name, Price FROM dataset-name.abc.table-name v GROUP BY 1, 2`,
 				SQL: `
-			              select ID,
-			                     Name,
-			                     Price
-			              from dataset-name.abc.table-name v
-			              group by 1, 2
-			          `,
+                           select ID,
+                                  Name,
+                                  Price 
+                           from dataset-name.abc.table-name v
+                           group by 1, 2
+                       `,
 			},
 			{
 				description: "",
@@ -296,11 +296,14 @@ func TestParseSelect(t *testing.T) {
 				SQL:         `SELECT col1, col2 FROM table1 t, UNNEST(b) v`,
 				expect:      `SELECT col1, col2 FROM table1 t , UNNEST(b) v`,
 			},
+<<<<<<< HEAD
 			{
 				description: "",
 				SQL:         `SELECT               ID,NAME  FROM AAA               ORDER BY 2 DESC, 1 ASC`,
 				expect:      `SELECT ID, NAME FROM AAA ORDER BY 2 DESC, 1 ASC`,
 			},
+=======
+>>>>>>> parent of 2f039ea (fix OrderBy)
 		}
 
 		for _, testCase := range testCases {
