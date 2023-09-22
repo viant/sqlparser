@@ -59,7 +59,10 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 
 		if len(actual.OrderBy) > 0 {
 			builder.WriteString(" ORDER BY ")
-			for _, item := range actual.OrderBy {
+			for i, item := range actual.OrderBy {
+				if i > 0 {
+					builder.WriteString(", ")
+				}
 				stringify(item, builder)
 			}
 		}
