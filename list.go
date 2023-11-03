@@ -17,7 +17,7 @@ func parseSelectListItem(cursor *parsly.Cursor, list *query.List) error {
 		item.Comments = match.Text(cursor)
 	}
 	list.Append(item)
-	match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, inlineCommentMatcher, commentBlockMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
 	switch match.Code {
 	case commentBlock:
 		item.Comments = match.Text(cursor)
@@ -167,7 +167,7 @@ func parseGroupByList(cursor *parsly.Cursor, list *query.List) error {
 	return nil
 }
 
-//ParseList parses list
+// ParseList parses list
 func ParseList(raw string) (query.List, error) {
 	cursor := parsly.NewCursor("", []byte(raw), 0)
 	list := query.List{}

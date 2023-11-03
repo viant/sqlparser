@@ -107,11 +107,17 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		stringify(actual.X, builder)
 		if len(actual.Except) > 0 {
 			builder.WriteString(" EXCEPT ")
+			if len(actual.Except) > 1 {
+				builder.WriteString("(")
+			}
 			for i, item := range actual.Except {
 				if i > 0 {
 					builder.WriteString(", ")
 				}
 				builder.WriteString(item)
+			}
+			if len(actual.Except) > 1 {
+				builder.WriteString(")")
 			}
 		}
 		if actual.Comments != "" {

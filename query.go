@@ -228,10 +228,20 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 }
 
 func expectExpectIdentifiers(cursor *parsly.Cursor, expect *[]string) (bool, error) {
-	match := cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+	pos := cursor.Pos
+	match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, identifierMatcher)
 	switch match.Code {
+	case parenthesesCode:
+		block := match.Text(cursor)
+		for _, item := range strings.Split(block[1:len(block)-1], ",") {
+			*expect = append(*expect, strings.TrimSpace(item))
+		}
 	case identifierCode:
 		item := match.Text(cursor)
+		if cursor.Pos < len(cursor.Input) && cursor.Input[cursor.Pos] == '(' {
+			cursor.Pos = pos
+			return false, nil
+		}
 		*expect = append(*expect, item)
 	default:
 		return false, nil

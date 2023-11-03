@@ -23,6 +23,17 @@ func TestParseSelect(t *testing.T) {
 		}{
 
 			{
+				description: "except",
+				SQL:         "SELECT main.* EXCEPT(Id), cast(main AS Record), cardinality(main, 'One') AS main FROM ta",
+				expect:      "SELECT main.* EXCEPT Id, cast(main AS Record), cardinality(main, 'One') AS main FROM ta",
+			},
+			{
+				description: "except group",
+				SQL:         "SELECT main.* EXCEPT (Id,Name), cast(main AS Record), cardinality(main, 'One') AS main FROM ta",
+				expect:      "SELECT main.* EXCEPT (Id, Name), cast(main AS Record), cardinality(main, 'One') AS main FROM ta",
+			},
+
+			{
 				description: "criteria with  expr",
 				SQL:         "SELECT Name FROM BAR WHERE ${predicate}",
 				expect:      "SELECT Name FROM BAR WHERE ${predicate}",
@@ -96,13 +107,13 @@ func TestParseSelect(t *testing.T) {
 			{
 				description: "except select",
 				SQL:         "SELECT * EXCEPT c1,c2 FROM x t",
-				expect:      "SELECT * EXCEPT c1, c2 FROM x t",
+				expect:      "SELECT * EXCEPT (c1, c2) FROM x t",
 			},
 
 			{
 				description: "except select",
 				SQL:         "SELECT t1.* EXCEPT c1,c2, t2.* EXCEPT c3  FROM x t1 JOIN y AS t2 ON t1.ID=t2.ID",
-				expect:      "SELECT t1.* EXCEPT c1, c2, t2.* EXCEPT c3 FROM x t1 JOIN y t2 ON t1.ID = t2.ID",
+				expect:      "SELECT t1.* EXCEPT (c1, c2), t2.* EXCEPT c3 FROM x t1 JOIN y t2 ON t1.ID = t2.ID",
 			},
 
 			{
@@ -164,13 +175,13 @@ func TestParseSelect(t *testing.T) {
 			{
 				description: "except select",
 				SQL:         "SELECT * EXCEPT c1,c2 FROM x t",
-				expect:      "SELECT * EXCEPT c1, c2 FROM x t",
+				expect:      "SELECT * EXCEPT (c1, c2) FROM x t",
 			},
 
 			{
 				description: "except select",
 				SQL:         "SELECT t1.* EXCEPT c1,c2, t2.* EXCEPT c3  FROM x t1 JOIN y AS t2 ON t1.ID=t2.ID",
-				expect:      "SELECT t1.* EXCEPT c1, c2, t2.* EXCEPT c3 FROM x t1 JOIN y t2 ON t1.ID = t2.ID",
+				expect:      "SELECT t1.* EXCEPT (c1, c2), t2.* EXCEPT c3 FROM x t1 JOIN y t2 ON t1.ID = t2.ID",
 			},
 
 			{
