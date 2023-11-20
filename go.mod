@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/stretchr/testify v1.8.1
-	github.com/viant/parsly v0.3.0
+	github.com/viant/parsly v0.3.2-0.20231120160314-11ec855ce00a
 )
 
 require (

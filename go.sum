@@ -125,6 +125,10 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/viant/assertly v0.9.0/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/parsly v0.3.0 h1:UR4/ml87j4StdEa+CeSicKlW+pXMMFx0J+U95YcfE0o=
 github.com/viant/parsly v0.3.0/go.mod h1:4PKQzioRT9R99ceIhZ6tCD3tp0H0n2dEoIOaLulVvrg=
+github.com/viant/parsly v0.3.2-0.20231120155145-7e5a15fa9a7f h1:yKoMkkyqy095iRe6wRfvo+q0ZQ0yblFOB5Ev7PBM6GU=
+github.com/viant/parsly v0.3.2-0.20231120155145-7e5a15fa9a7f/go.mod h1:4PKQzioRT9R99ceIhZ6tCD3tp0H0n2dEoIOaLulVvrg=
+github.com/viant/parsly v0.3.2-0.20231120160314-11ec855ce00a h1:H+7xS8C8Ywjxc0EfiKL9m+A7AF6JqkJKu5W+7zus/W0=
+github.com/viant/parsly v0.3.2-0.20231120160314-11ec855ce00a/go.mod h1:4PKQzioRT9R99ceIhZ6tCD3tp0H0n2dEoIOaLulVvrg=
 github.com/viant/toolbox v0.34.5/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
