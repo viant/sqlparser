@@ -56,6 +56,15 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) error {
 				binary.X = &expr.Placeholder{Name: match.Text(cursor)}
 			} else {
 				binary.Y = &expr.Placeholder{Name: match.Text(cursor)}
+
+				match = cursor.MatchAfterOptional(whitespaceMatcher, logicalOperatorMatcher)
+				if match.Code == logicalOperator {
+					additionalExpr := &expr.Binary{X: binary.Y, Op: match.Text(cursor)}
+					if err := parseBinaryExpr(cursor, additionalExpr); err != nil {
+						return err
+					}
+					binary.Y = additionalExpr
+				}
 			}
 		default:
 			return nil

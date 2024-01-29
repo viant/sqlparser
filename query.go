@@ -156,7 +156,6 @@ beginMatch:
 }
 
 func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.TokenMatch) (bool, error) {
-
 	switch match.Code {
 	case nextCode:
 
