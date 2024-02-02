@@ -69,7 +69,9 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) error {
 				case parenthesesCode:
 					placeholder.Name += match.Text(cursor)
 				case parsly.Invalid:
-					return cursor.NewError(whitespaceMatcher, logicalOperatorMatcher)
+					binary.Y = nil
+					cursor.Pos = pos
+					return nil
 				}
 			}
 		default:
