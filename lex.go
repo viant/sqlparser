@@ -65,6 +65,8 @@ const (
 	deleteCode
 	withKeyword
 	unionKeyword
+	registerTypeKeyword
+	globalKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -153,11 +155,17 @@ var notNullMatcher = parsly.NewToken(notNullToken, "NOT NULL", matcher.NewSpaced
 var ifNotExistsMatcher = parsly.NewToken(ifNotExistsToken, "IF NOT EXISTS", matcher.NewSpacedSet([]string{
 	"if not exists"}, &option.Case{}))
 
+var globalMatcher = parsly.NewToken(globalKeyword, "GLOBAL", matcher.NewSpacedSet([]string{
+	"global"}, &option.Case{}))
+
 var ifExistsMatcher = parsly.NewToken(ifExistsToken, "IF EXISTS", matcher.NewSpacedSet([]string{
 	"if exists"}, &option.Case{}))
 
 var createTableMatcher = parsly.NewToken(createTableToken, "CREATE TABLE", matcher.NewSpacedSet([]string{
 	"create table"}, &option.Case{}))
+
+var registerType = parsly.NewToken(registerTypeKeyword, "REGISTER TYPE", matcher.NewSpacedSet([]string{
+	"register type"}, &option.Case{}))
 
 var defaultMatcher = parsly.NewToken(defaultToken, "DEFAULT", matcher.NewKeyword("default", &option.Case{}))
 
