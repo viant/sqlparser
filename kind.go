@@ -109,7 +109,7 @@ func ParseKind(SQL string) Kind {
 		}
 	case 'r': //register
 		switch secondToken[0] {
-		case 't': //register type
+		case 't', 'g': //register type, global type
 			return KindRegisterType
 		}
 	case 'c': //create

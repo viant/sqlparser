@@ -28,6 +28,10 @@ func parseRegisterType(cursor *parsly.Cursor, destination *schema.Register) erro
 		return cursor.NewError(selectorMatcher)
 	}
 	destination.Name = match.Text(cursor)
+	match = cursor.MatchAfterOptional(whitespaceMatcher, asKeywordMatcher)
+	if match.Code != asKeyword {
+		return cursor.NewError(asKeywordMatcher)
+	}
 	destination.Spec = strings.TrimSpace(string(cursor.Input[cursor.Pos:]))
 	return nil
 }
