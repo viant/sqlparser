@@ -14,6 +14,7 @@ const (
 	KindMerge        = "merge"
 	KindDelete       = "delete"
 	KindRegisterType = "register type"
+	KindRegisterSet  = "register set"
 	KindCreateTable  = "create table"
 	KindDropTable    = "drop table"
 )
@@ -59,6 +60,11 @@ func (k Kind) IsDelete() bool {
 // IsRegisterType returns true if the Kind is KindRegisterType.
 func (k Kind) IsRegisterType() bool {
 	return k == KindRegisterType
+}
+
+// IsRegisterSet returns true if the Kind is KindRegisterSet.
+func (k Kind) IsRegisterSet() bool {
+	return k == KindRegisterSet
 }
 
 // IsCreateTable returns true if the Kind is KindCreateTable.
@@ -111,6 +117,8 @@ func ParseKind(SQL string) Kind {
 		switch secondToken[0] {
 		case 't', 'g': //register type, global type
 			return KindRegisterType
+		case 's': //register set
+			return KindRegisterSet
 		}
 	case 'c': //create
 		switch secondToken[0] {

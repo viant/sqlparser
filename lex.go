@@ -67,6 +67,7 @@ const (
 	unionKeyword
 	registerTypeKeyword
 	globalKeyword
+	registerSetKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -166,6 +167,9 @@ var createTableMatcher = parsly.NewToken(createTableToken, "CREATE TABLE", match
 
 var registerType = parsly.NewToken(registerTypeKeyword, "REGISTER TYPE", matcher.NewSpacedSet([]string{
 	"register type"}, &option.Case{}))
+
+var registerSet = parsly.NewToken(registerSetKeyword, "REGISTER SET", matcher.NewSpacedSet([]string{
+	"register set"}, &option.Case{}))
 
 var defaultMatcher = parsly.NewToken(defaultToken, "DEFAULT", matcher.NewKeyword("default", &option.Case{}))
 
