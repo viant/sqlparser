@@ -18,6 +18,20 @@ type (
 	Values []Value
 )
 
+// Values returns values
+func (v Values) Values(placeholderProvider func(idx int) interface{}) []interface{} {
+	var result = make([]interface{}, len(v))
+	idx := 0
+	for i, item := range v {
+		if item.Placeholder {
+			result[i] = placeholderProvider(idx)
+			continue
+		}
+		result[i] = item.Value
+	}
+	return result
+}
+
 // NewValues creates predicate values
 func NewValues(n node.Node) (Values, error) {
 	var values Values
