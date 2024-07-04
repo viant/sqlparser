@@ -25,6 +25,7 @@ func (v Values) Values(placeholderProvider func(idx int) interface{}) []interfac
 	for i, item := range v {
 		if item.Placeholder {
 			result[i] = placeholderProvider(idx)
+			idx++
 			continue
 		}
 		result[i] = item.Value
