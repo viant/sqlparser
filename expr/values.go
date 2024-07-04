@@ -18,6 +18,18 @@ type (
 	Values []Value
 )
 
+func (v *Value) AsInt() (int, bool) {
+	ret, ok := v.Value.(int)
+	if ok {
+		return ret, true
+	}
+	f, ok := v.Value.(float64)
+	if ok {
+		return int(f), true
+	}
+	return 0, false
+}
+
 // Values returns values
 func (v Values) Values(placeholderProvider func(idx int) interface{}) []interface{} {
 	var result = make([]interface{}, len(v))
