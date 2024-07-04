@@ -109,6 +109,35 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		result.X = result.X
 		if binary.Y != nil {
 			result.X = binary
+		} else {
+			exprCursor := parsly.NewCursor(cursor.Path, []byte(rawExpr), cursor.Pos-len(raw))
+
+			var list []node.Node
+			tokens := append([]*parsly.Token{placeholderMatcher}, literalTokens...)
+			for i := 0; i < len(rawExpr); i++ {
+				matched := exprCursor.MatchAfterOptional(whitespaceMatcher, tokens...)
+				switch matched.Code {
+				case nextCode:
+				case placeholderTokenCode:
+					list = append(list, &expr.Placeholder{Name: matched.Text(exprCursor)})
+				case nullKeyword:
+					list = append(list, expr.NewNullLiteral(matched.Text(exprCursor)))
+				case singleQuotedStringLiteral, doubleQuotedStringLiteral:
+					list = append(list, expr.NewStringLiteral(matched.Text(exprCursor)))
+				case boolLiteral:
+					list = append(list, expr.NewBoolLiteral(matched.Text(exprCursor)))
+				case intLiteral:
+					list = append(list, expr.NewIntLiteral(matched.Text(exprCursor)))
+				case numericLiteral:
+					list = append(list, expr.NewNumericLiteral(matched.Text(exprCursor)))
+				default:
+					break
+				}
+			}
+			if len(list) > 0 {
+				result.X = list
+			}
+
 		}
 		return result, nil
 	case notOperator:
