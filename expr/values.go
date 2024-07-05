@@ -30,6 +30,44 @@ func (v *Value) AsInt() (int, bool) {
 	return 0, false
 }
 
+func NewValue(raw string) (*Value, error) {
+	ret := &Value{Raw: raw}
+	if strings.HasPrefix(raw, "'") {
+		ret.Value = strings.Trim(raw, "'")
+		ret.Kind = "string"
+	} else {
+		switch strings.ToLower(raw) {
+		case "null":
+			ret.Value = nil
+			ret.Kind = "null"
+		case "true":
+			ret.Value = true
+			ret.Kind = "bool"
+		case "false":
+			ret.Value = false
+			ret.Kind = "bool"
+		}
+		if strings.Contains(raw, ".") {
+			v, err := strconv.ParseFloat(raw, 64)
+			if err != nil {
+				return nil, err
+			}
+			ret.Value = v
+			ret.Kind = "numeric"
+
+		} else {
+			v, err := strconv.Atoi(raw)
+			if err != nil {
+				return nil, err
+			}
+			ret.Value = v
+			ret.Kind = "int"
+
+		}
+	}
+	return ret, nil
+}
+
 // Values returns values
 func (v Values) Values(placeholderProvider func(idx int) interface{}) []interface{} {
 	var result = make([]interface{}, len(v))
