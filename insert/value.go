@@ -16,6 +16,6 @@ type Value struct {
 func (v *Value) IsPlaceholder() bool {
 	return v.Raw == "?"
 }
-func (v *Value) Value() (interface{}, error) {
+func (v *Value) Value() (*expr.Value, error) {
 	return expr.NewValue(v.Raw)
 }
