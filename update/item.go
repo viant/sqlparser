@@ -18,6 +18,6 @@ type Item struct {
 func (v *Item) IsPlaceholder() bool {
 	return v.Raw == "?"
 }
-func (v *Item) Interface() (interface{}, error) {
+func (v *Item) Value() (interface{}, error) {
 	return expr.NewValue(v.Raw)
 }
