@@ -62,7 +62,6 @@ func NewValue(raw string) (*Value, error) {
 			}
 			ret.Value = v
 			ret.Kind = "int"
-
 		}
 	}
 	return ret, nil
