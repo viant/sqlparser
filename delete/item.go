@@ -1,6 +1,6 @@
-package del
+package delete
 
-//Item represents deletion iem
+// Item represents deletion iem
 type Item struct {
 	Comments string
 	Raw      string

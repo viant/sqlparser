@@ -1,8 +1,8 @@
-package del
+package delete
 
 import "github.com/viant/sqlparser/node"
 
-//Target represents deletion target
+// Target represents deletion target
 type Target struct {
 	X        node.Node
 	Comments string
