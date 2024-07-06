@@ -8,7 +8,7 @@ type selector struct {
 	allowsDashes bool
 }
 
-//Match matches a string
+// Match matches a string
 func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 	input := cursor.Input
 	pos := cursor.Pos
@@ -42,7 +42,7 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 	}
 	for i := pos; i < size; i++ {
 		switch input[i] {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_', '.', ':':
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_', '.', ':', '$':
 			matched++
 			continue
 		case '*':
@@ -71,7 +71,7 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 	return matched
 }
 
-//NewSelector creates a selector matcher
+// NewSelector creates a selector matcher
 func NewSelector(allowDashes bool) parsly.Matcher {
 	return &selector{
 		allowsDashes: allowDashes,
