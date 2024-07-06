@@ -16,8 +16,14 @@ type Item struct {
 }
 
 func (v *Item) IsPlaceholder() bool {
-	return v.Raw == "?"
+	_, ok := v.Expr.(*expr.Placeholder)
+	return ok
 }
+func (v *Item) IsExpr() bool {
+	_, ok := v.Expr.(*expr.Binary)
+	return ok
+}
+
 func (v *Item) Value() (*expr.Value, error) {
 	return expr.NewValue(v.Raw)
 }
