@@ -10,7 +10,22 @@ type Binary struct {
 	Op   string
 }
 
+func (b *Binary) Normalize() *Binary {
+	normalized := *b
+	switch b.Op[0] {
+	case 'A', 'O', 'a', 'o':
+		if bin, ok := b.Y.(*Binary); ok && Identity(b.X) != nil {
+			xBin := &Binary{X: b.X, Y: bin.X, Op: b.Op}
+			normalized.X = xBin
+			normalized.Op = bin.Op
+			normalized.Y = bin.Y
+		}
+	}
+	return &normalized
+}
+
 func (b *Binary) Walk(fn func(ident node.Node, values Values, operator, parentOperator string) error) error {
+	b = b.Normalize()
 	switch b.Op[0] {
 	case 'A', 'O', 'a', 'o':
 		if x, ok := b.X.(*Binary); ok {
