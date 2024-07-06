@@ -14,6 +14,8 @@ func (b *Binary) Normalize() *Binary {
 	normalized := *b
 	switch b.Op[0] {
 	case 'A', 'O', 'a', 'o':
+	default:
+
 		if bin, ok := b.Y.(*Binary); ok && Identity(b.X) != nil {
 			xBin := &Binary{X: b.X, Y: bin.X, Op: b.Op}
 			normalized.X = xBin
