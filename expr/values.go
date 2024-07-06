@@ -88,6 +88,11 @@ func NewValues(n node.Node) (Values, error) {
 	switch actual := n.(type) {
 	case *Placeholder:
 		return append(values, Value{Placeholder: true}), nil
+	case *Binary:
+		if actual.Y.(*Binary) != nil {
+			return NewValues(actual.X)
+		}
+		return NewValues(actual.Y)
 	case *Literal:
 		switch actual.Kind {
 		case "int":
