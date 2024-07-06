@@ -18,7 +18,12 @@ func TestParseUpdate(t *testing.T) {
 		{
 			description: "bq table select",
 			SQL:         "UPDATE users SET name = 'Smith', last_access_time = ? WHERE id = 2",
-			expect:      "UPDATE users SET name = 'Smith', last_access_time = ? WHERE id = 2",
+			expect:      "UPDATE users SET name = 'Smith' , last_access_time = ?  WHERE id = 2",
+		},
+		{
+			description: "incremental update",
+			SQL:         "UPDATE users SET name = 'Smith', value=value+?, last_access_time = ? WHERE id = 2",
+			expect:      "UPDATE users SET name = 'Smith' , value = value + ?, last_access_time = ?  WHERE id = 2",
 		},
 	}
 

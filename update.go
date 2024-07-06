@@ -6,7 +6,7 @@ import (
 	"github.com/viant/sqlparser/update"
 )
 
-//ParseUpdate parses update statement
+// ParseUpdate parses update statement
 func ParseUpdate(SQL string) (*update.Statement, error) {
 	result := &update.Statement{}
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
@@ -92,7 +92,17 @@ func expectUpdateSetItem(cursor *parsly.Cursor) (*update.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	item.Expr = operand
+
+	pos := cursor.Pos
+	binary := &expr.Binary{}
+	binary.X = operand
+	if err = parseBinaryExpr(cursor, binary); err == nil {
+		item.Expr = binary
+	} else {
+		cursor.Pos = pos
+		item.Expr = operand
+	}
+
 	item.Begin = uint32(beginPos) + 1
 	item.End = uint32(cursor.Pos)
 	return item, err
