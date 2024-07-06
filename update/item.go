@@ -15,15 +15,12 @@ type Item struct {
 	Meta     interface{}
 }
 
-func (v *Item) IsPlaceholder() bool {
-	_, ok := v.Expr.(*expr.Placeholder)
-	return ok
-}
 func (v *Item) IsExpr() bool {
 	_, ok := v.Expr.(*expr.Binary)
 	return ok
 }
 
 func (v *Item) Value() (*expr.Value, error) {
-	return expr.NewValue(v.Raw)
+	values, err := expr.NewValues(v.Expr)
+	return &values[0], err
 }

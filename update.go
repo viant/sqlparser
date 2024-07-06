@@ -96,11 +96,13 @@ func expectUpdateSetItem(cursor *parsly.Cursor) (*update.Item, error) {
 	pos := cursor.Pos
 	binary := &expr.Binary{}
 	binary.X = operand
+	item.Expr = operand
 	if err = parseBinaryExpr(cursor, binary); err == nil {
-		item.Expr = binary
+		if binary.Op != "" {
+			item.Expr = binary
+		}
 	} else {
 		cursor.Pos = pos
-		item.Expr = operand
 	}
 
 	item.Begin = uint32(beginPos) + 1
