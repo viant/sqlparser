@@ -217,13 +217,32 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(" (")
 		builder.WriteString(strings.Join(actual.Columns, ", "))
 		builder.WriteString(") VALUES(")
-		for i, value := range actual.Values {
+		valuesLen := len(actual.Values)
+		columnLen := len(actual.Columns)
+		for i := 0; i < valuesLen; i += columnLen {
 			if i > 0 {
-				builder.WriteString(", ")
+				builder.WriteString("), (")
 			}
-			stringify(value.Expr, builder)
+			for j := 0; j < columnLen; j++ {
+				if j > 0 {
+					builder.WriteString(", ")
+				}
+				stringify(actual.Values[i+j].Expr, builder)
+			}
 		}
 		builder.WriteString(")")
+		if actual.Alias != "" {
+			builder.WriteString(" AS " + actual.Alias)
+			if len(actual.OnDuplicateKeyUpdate) > 0 {
+				builder.WriteString(" ON DUPLICATE KEY UPDATE ")
+				for i, item := range actual.OnDuplicateKeyUpdate {
+					if i > 0 {
+						builder.WriteString(", ")
+					}
+					stringify(item, builder)
+				}
+			}
+		}
 	case *del.Statement:
 		builder.WriteString("DELETE")
 		for i, item := range actual.Items {

@@ -26,6 +26,16 @@ func TestParseInsert(t *testing.T) {
 			SQL:         "INSERT INTO CI_AD_ORDER(ID, NAME) VALUES(0, $Name);",
 			expect:      "INSERT INTO CI_AD_ORDER (ID, NAME) VALUES(0, $Name)",
 		},
+		{
+			description: "batch insert insert",
+			SQL:         "INSERT INTO CI_AD_ORDER(ID, NAME) VALUES(?, ?), (?, ?);",
+			expect:      "INSERT INTO CI_AD_ORDER (ID, NAME) VALUES(?, ?), (?, ?)",
+		},
+		{
+			description: "batch insert insert on duplicate key update",
+			SQL:         "INSERT INTO CI_AD_ORDER(ID, VAL, SVAL) VALUES(?, ?, ?), (?, ?, ?) AS new ON DUPLICATE KEY UPDATE VAL = VAL + new.VAL, SVAL = SAVL + new.VAL",
+			expect:      "INSERT INTO CI_AD_ORDER (ID, VAL, SVAL) VALUES(?, ?, ?), (?, ?, ?) AS new ON DUPLICATE KEY UPDATE VAL = VAL + new.VAL, SVAL = SAVL + new.VAL",
+		},
 	}
 
 	//for _, testCase := range testCases[len(testCases)-1:] {

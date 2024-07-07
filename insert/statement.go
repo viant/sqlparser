@@ -1,8 +1,12 @@
 package insert
 
-//Statement represetns an insert stmt
+import "github.com/viant/sqlparser/update"
+
+// Statement represents an insert stmt
 type Statement struct {
-	Target  Target
-	Columns []string
-	Values  []*Value
+	Target               Target
+	Alias                string
+	Columns              []string
+	Values               []*Value
+	OnDuplicateKeyUpdate []*update.Item
 }

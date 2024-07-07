@@ -51,6 +51,7 @@ const (
 	groupByKeyword
 	havingKeyword
 	orderByKeyword
+	onDuplicateKeyUpdate
 	rangeOperator
 	windowTokenCode
 	literalCode
@@ -113,6 +114,8 @@ var groupByMatcher = parsly.NewToken(groupByKeyword, "GROUP BY", matcher.NewSpac
 var havingKeywordMatcher = parsly.NewToken(havingKeyword, "HAVING", matcher.NewKeyword("having", &option.Case{}))
 
 var orderByKeywordMatcher = parsly.NewToken(orderByKeyword, "ORDER BY", matcher.NewSpacedFragment("order by", &option.Case{}))
+var onDuplicateKeyUpdateMatcher = parsly.NewToken(onDuplicateKeyUpdate, "ON DUPLICATE KEY UPDATE", matcher.NewSpacedFragment("on duplicate key update", &option.Case{}))
+
 var windowMatcher = parsly.NewToken(windowTokenCode, "LIMIT|OFFSET", matcher.NewSet([]string{"limit", "offset"}, &option.Case{}))
 
 var updateKeywordMatcher = parsly.NewToken(updateKeyword, "UPDATE", matcher.NewKeyword("update", &option.Case{}))

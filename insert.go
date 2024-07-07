@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//ParseInsert Parses INSERT INTO statement
+// ParseInsert Parses INSERT INTO statement
 func ParseInsert(SQL string) (*insert.Statement, error) {
 	result := &insert.Statement{}
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
@@ -48,10 +48,60 @@ func parseInsert(cursor *parsly.Cursor, stmt *insert.Statement) error {
 			if stmt.Values, err = parseInsertValues(matched[1:len(matched)-1], offset); err != nil {
 				return err
 			}
+			for i := cursor.Pos; i < len(cursor.Input); i++ {
+				match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher)
+				if match.Code != nextCode {
+					break
+				}
+				match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
+				if match.Code != parenthesesCode {
+					return cursor.NewError(parenthesesMatcher)
+				}
+				values, err := parseInsertValues(matched[1:len(matched)-1], offset)
+				if err != nil {
+					return err
+				}
+				stmt.Values = append(stmt.Values, values...)
+			}
+			match = cursor.MatchAfterOptional(whitespaceMatcher, asKeywordMatcher)
+			if match.Code == asKeyword {
+				match = cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)
+				if match.Code != selectorTokenCode {
+					return cursor.NewError(selectorMatcher)
+				}
+				stmt.Alias = match.Text(cursor)
+				if match = cursor.MatchAfterOptional(whitespaceMatcher, onDuplicateKeyUpdateMatcher); match.Code == onDuplicateKeyUpdate {
+					item, err := expectUpdateSetItem(cursor)
+					if err != nil {
+						return err
+					}
+					stmt.OnDuplicateKeyUpdate = append(stmt.OnDuplicateKeyUpdate, item)
+					if err = parseDuplicateSetItems(cursor, stmt); err != nil {
+						return err
+					}
+				}
 
+			}
 		}
 	default:
 		return cursor.NewError(insertIntoKeywordMatcher)
+	}
+	return nil
+}
+
+func parseDuplicateSetItems(cursor *parsly.Cursor, stmt *insert.Statement) error {
+	match := cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher)
+	switch match.Code {
+	case nextCode:
+		item, err := expectUpdateSetItem(cursor)
+		if err != nil {
+			return err
+		}
+		stmt.OnDuplicateKeyUpdate = append(stmt.OnDuplicateKeyUpdate, item)
+		return parseDuplicateSetItems(cursor, stmt)
+	case parsly.EOF:
+	default:
+		return nil
 	}
 	return nil
 }
