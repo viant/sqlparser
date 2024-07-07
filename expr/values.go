@@ -16,7 +16,7 @@ type (
 		Kind        string
 	}
 	Values struct {
-		idx int
+		Idx int
 		X   []Value
 	}
 )
@@ -80,8 +80,8 @@ func (v *Values) Values(placeholderProvider func(idx int) interface{}) []interfa
 
 	for i, item := range v.X {
 		if item.Placeholder {
-			result[i] = placeholderProvider(v.idx)
-			v.idx++
+			result[i] = placeholderProvider(v.Idx)
+			v.Idx++
 			continue
 		}
 		result[i] = item.Value
