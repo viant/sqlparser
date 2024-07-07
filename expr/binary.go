@@ -127,6 +127,31 @@ func (b *Binary) Identifier() node.Node {
 	return Identity(b.Y)
 }
 
+func (b *Binary) Ident() *Ident {
+	if x, ok := b.X.(*Ident); ok {
+		return x
+	}
+	if y, ok := b.Y.(*Ident); ok {
+		return y
+	}
+	return nil
+}
+
+func (b *Binary) SelectorIdent(root string) *Ident {
+	if x, ok := b.X.(*Selector); ok {
+		if x.Name == root {
+			return x.X.(*Ident)
+		}
+		return nil
+	}
+	if y, ok := b.Y.(*Selector); ok {
+		if y.Name == root {
+			return y.X.(*Ident)
+		}
+	}
+	return nil
+}
+
 // Values returns expression values
 func (b *Binary) Values() (*Values, error) {
 	if x := Identity(b.X); x == nil {
