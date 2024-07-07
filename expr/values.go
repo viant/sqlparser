@@ -15,7 +15,10 @@ type (
 		Value       interface{}
 		Kind        string
 	}
-	Values []Value
+	Values struct {
+		idx int
+		X   []Value
+	}
 )
 
 func (v *Value) AsInt() (int, bool) {
@@ -67,14 +70,18 @@ func NewValue(raw string) (*Value, error) {
 	return ret, nil
 }
 
+func (v *Values) append(value ...Value) {
+	v.X = append(v.X, value...)
+}
+
 // Values returns values
-func (v Values) Values(placeholderProvider func(idx int) interface{}) []interface{} {
-	var result = make([]interface{}, len(v))
-	idx := 0
-	for i, item := range v {
+func (v *Values) Values(placeholderProvider func(idx int) interface{}) []interface{} {
+	var result = make([]interface{}, len(v.X))
+
+	for i, item := range v.X {
 		if item.Placeholder {
-			result[i] = placeholderProvider(idx)
-			idx++
+			result[i] = placeholderProvider(v.idx)
+			v.idx++
 			continue
 		}
 		result[i] = item.Value
@@ -83,11 +90,12 @@ func (v Values) Values(placeholderProvider func(idx int) interface{}) []interfac
 }
 
 // NewValues creates predicate values
-func NewValues(n node.Node) (Values, error) {
-	var values Values
+func NewValues(n node.Node) (*Values, error) {
+	var values = Values{}
 	switch actual := n.(type) {
 	case *Placeholder:
-		return append(values, Value{Placeholder: true}), nil
+		values.append(Value{Placeholder: true})
+		return &values, nil
 	case *Binary:
 		if actual.Y.(*Binary) != nil {
 			return NewValues(actual.X)
@@ -100,17 +108,21 @@ func NewValues(n node.Node) (Values, error) {
 			if err != nil {
 				return nil, err
 			}
-			return append(values, Value{Value: v, Kind: actual.Kind}), nil
+			values.append(Value{Value: v, Kind: actual.Kind})
+			return &values, nil
 		case "null":
-			return append(values, Value{Value: nil, Kind: actual.Kind}), nil
+			values.append(Value{Value: nil, Kind: actual.Kind})
+			return &values, nil
 		case "string":
-			return append(values, Value{Value: strings.Trim(actual.Value, "'"), Kind: actual.Kind}), nil
+			values.append(Value{Value: strings.Trim(actual.Value, "'"), Kind: actual.Kind})
+			return &values, nil
 		case "numeric":
 			v, err := strconv.ParseFloat(actual.Value, 64)
 			if err != nil {
 				return nil, err
 			}
-			return append(values, Value{Value: v, Kind: actual.Kind}), nil
+			values.append(Value{Value: v, Kind: actual.Kind})
+			return &values, nil
 		}
 	case *Parenthesis:
 		list, ok := actual.X.([]node.Node)
@@ -120,9 +132,9 @@ func NewValues(n node.Node) (Values, error) {
 				if err != nil {
 					return nil, err
 				}
-				values = append(values, v...)
+				values.append(v.X...)
 			}
-			return values, nil
+			return &values, nil
 		}
 	}
 	return nil, fmt.Errorf("unsupported value node: %T", n)

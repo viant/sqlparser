@@ -36,7 +36,7 @@ func TestParseQualify(t *testing.T) {
 			continue
 		}
 		actualEq := make(map[string]interface{})
-		err = qualify.X.(*expr.Binary).Walk(func(ident node.Node, values expr.Values, operator, parentOperator string) error {
+		err = qualify.X.(*expr.Binary).Walk(func(ident node.Node, values *expr.Values, operator, parentOperator string) error {
 			value := toValues(values)
 			actualEq[Stringify(ident)] = value
 			return nil
@@ -49,17 +49,17 @@ func TestParseQualify(t *testing.T) {
 
 }
 
-func toValues(values expr.Values) interface{} {
+func toValues(values *expr.Values) interface{} {
 	var value interface{}
-	if len(values) == 1 {
-		if values[0].Placeholder {
+	if len(values.X) == 1 {
+		if values.X[0].Placeholder {
 			value = "?"
 		} else {
-			value = values[0].Value
+			value = values.X[0].Value
 		}
 	} else {
-		aSlice := make([]interface{}, len(values))
-		for i, v := range values {
+		aSlice := make([]interface{}, len(values.X))
+		for i, v := range values.X {
 			if v.Placeholder {
 				aSlice[i] = "?"
 			} else {

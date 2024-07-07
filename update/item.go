@@ -22,5 +22,5 @@ func (v *Item) IsExpr() bool {
 
 func (v *Item) Value() (*expr.Value, error) {
 	values, err := expr.NewValues(v.Expr)
-	return &values[0], err
+	return &values.X[0], err
 }

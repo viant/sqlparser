@@ -26,7 +26,7 @@ func (b *Binary) Normalize() *Binary {
 	return &normalized
 }
 
-func (b *Binary) Walk(fn func(ident node.Node, values Values, operator, parentOperator string) error) error {
+func (b *Binary) Walk(fn func(ident node.Node, values *Values, operator, parentOperator string) error) error {
 	b = b.Normalize()
 	switch b.Op[0] {
 	case 'A', 'O', 'a', 'o':
@@ -46,7 +46,7 @@ func (b *Binary) Walk(fn func(ident node.Node, values Values, operator, parentOp
 
 }
 
-func (b *Binary) walk(fn func(ident node.Node, values Values, operator, parentOperator string) error, operator string) error {
+func (b *Binary) walk(fn func(ident node.Node, values *Values, operator, parentOperator string) error, operator string) error {
 	switch b.Op[0] {
 	case 'A', 'O':
 		if x, ok := b.X.(*Binary); ok {
@@ -70,7 +70,7 @@ func (b *Binary) walk(fn func(ident node.Node, values Values, operator, parentOp
 }
 
 // Predicate binary predicate or nil
-func (b *Binary) Predicate() (node.Node, Values, error) {
+func (b *Binary) Predicate() (node.Node, *Values, error) {
 	switch b.Op[0] {
 	case 'A', 'O':
 		return nil, nil, nil
@@ -128,7 +128,7 @@ func (b *Binary) Identifier() node.Node {
 }
 
 // Values returns expression values
-func (b *Binary) Values() (Values, error) {
+func (b *Binary) Values() (*Values, error) {
 	if x := Identity(b.X); x == nil {
 		return NewValues(b.X)
 	}
