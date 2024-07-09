@@ -136,6 +136,24 @@ func NewValues(n node.Node) (*Values, error) {
 			}
 			return &values, nil
 		}
+	case *Range:
+		aRange, ok := n.(*Range)
+		if ok {
+			vMin, err := NewValues(aRange.Min)
+			if err != nil {
+				return nil, err
+			}
+
+			vMax, err := NewValues(aRange.Max)
+			if err != nil {
+				return nil, err
+			}
+
+			values.append(vMin.X...)
+			values.append(vMax.X...)
+			return &values, nil
+		}
 	}
+
 	return nil, fmt.Errorf("unsupported value node: %T", n)
 }
