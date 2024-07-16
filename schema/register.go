@@ -6,3 +6,8 @@ type Register struct {
 	Global bool
 	Spec   string
 }
+
+type RegisterSet struct {
+	Register
+	TTL int
+}

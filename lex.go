@@ -66,9 +66,10 @@ const (
 	deleteCode
 	withKeyword
 	unionKeyword
-	registerTypeKeyword
 	globalKeyword
-	registerSetKeyword
+	registerKeyword
+	typeKeyword
+	ttlKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -168,13 +169,13 @@ var ifExistsMatcher = parsly.NewToken(ifExistsToken, "IF EXISTS", matcher.NewSpa
 var createTableMatcher = parsly.NewToken(createTableToken, "CREATE TABLE", matcher.NewSpacedSet([]string{
 	"create table"}, &option.Case{}))
 
-var registerType = parsly.NewToken(registerTypeKeyword, "REGISTER TYPE", matcher.NewSpacedSet([]string{
-	"register type"}, &option.Case{}))
-
-var registerSet = parsly.NewToken(registerSetKeyword, "REGISTER SET", matcher.NewSpacedSet([]string{
-	"register set"}, &option.Case{}))
-
 var defaultMatcher = parsly.NewToken(defaultToken, "DEFAULT", matcher.NewKeyword("default", &option.Case{}))
 
 var dropTableMatcher = parsly.NewToken(dropTableToken, "DROP TABLE", matcher.NewSpacedSet([]string{
 	"drop table"}, &option.Case{}))
+
+var registerKeywordMatcher = parsly.NewToken(registerKeyword, "REGISTER", matcher.NewKeyword("register", &option.Case{}))
+
+var typeKeywordMatcher = parsly.NewToken(typeKeyword, "TYPE", matcher.NewKeyword("type", &option.Case{}))
+
+var ttlKeywordMatcher = parsly.NewToken(ttlKeyword, "With TTL", matcher.NewFragment("with ttl", &option.Case{Sensitive: false}))

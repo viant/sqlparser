@@ -80,12 +80,30 @@ func (k Kind) IsDropTable() bool {
 func ParseKind(SQL string) Kind {
 	SQL = removeSQLComments(SQL)
 	normalizedSQL := strings.TrimSpace(SQL)
+	if len(normalizedSQL) < 2 {
+		return KindUnknown
+	}
 	firstToken := strings.ToLower(normalizedSQL[0:2])
 	secondToken := ""
+	secondPart := ""
+
 	if index := strings.Index(normalizedSQL, " "); index != -1 {
 		for i := index; i < len(normalizedSQL); i++ {
 			if unicode.IsLetter(rune(normalizedSQL[i])) {
 				secondToken = strings.ToLower(normalizedSQL[i : i+1])
+				if i+1 < len(normalizedSQL) {
+					secondPart = normalizedSQL[i+1:]
+				}
+				break
+			}
+		}
+	}
+
+	thirdToken := ""
+	if index := strings.Index(secondPart, " "); index != -1 {
+		for i := index; i < len(secondPart); i++ {
+			if unicode.IsLetter(rune(secondPart[i])) {
+				thirdToken = strings.ToLower(secondPart[i : i+1])
 				break
 			}
 		}
@@ -108,19 +126,38 @@ func ParseKind(SQL string) Kind {
 		case 'e': //delete
 			return KindDelete
 		case 'r': //drop
+			if len(secondToken) == 0 {
+				return KindUnknown
+			}
 			switch secondToken[0] {
 			case 't': //drop table
 				return KindDropTable
 			}
 		}
 	case 'r': //register
+		if len(secondToken) == 0 {
+			return KindUnknown
+		}
 		switch secondToken[0] {
-		case 't', 'g': //register type, global type
+		case 't': //register type
 			return KindRegisterType
 		case 's': //register set
 			return KindRegisterSet
+		case 'g': //g global
+			if len(thirdToken) == 0 {
+				return KindUnknown
+			}
+			switch thirdToken[0] {
+			case 't': //register type (global type)
+				return KindRegisterType
+			case 's': //register set (global set)
+				return KindRegisterSet
+			}
 		}
 	case 'c': //create
+		if len(secondToken) == 0 {
+			return KindUnknown
+		}
 		switch secondToken[0] {
 		case 't': //create table
 			return KindCreateTable
