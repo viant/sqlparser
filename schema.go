@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/schema"
+	"math"
 	"strings"
 )
 
@@ -71,11 +72,17 @@ func parseRegisterSet(cursor *parsly.Cursor, destination *schema.RegisterSet) er
 			return cursor.NewError(setKeywordMatcher)
 		}
 
-		ttl64, err := match.Int(cursor)
+		ttl64, err := match.Uint(cursor)
 		if err != nil {
 			return fmt.Errorf("parseregisterset unable to get int value due to: %w", err)
 		}
-		destination.TTL = int(ttl64)
+
+		ttlUint32, err := uint64ToUint32(ttl64)
+		if err != nil {
+			return fmt.Errorf("parseregisterset unable to get uint32 value due to: %w", err)
+		}
+
+		destination.TTL = ttlUint32
 	}
 
 	match = cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)
@@ -89,4 +96,15 @@ func parseRegisterSet(cursor *parsly.Cursor, destination *schema.RegisterSet) er
 	}
 	destination.Spec = strings.TrimSpace(string(cursor.Input[cursor.Pos:]))
 	return nil
+}
+
+func uint64ToUint32(value uint64) (uint32, error) {
+	if value > math.MaxUint32 {
+		return 0, fmt.Errorf("value %d is out of range for uint32, max value accepted: %d", value, math.MaxUint32)
+	}
+
+	if value < 0 {
+		return 0, fmt.Errorf("value %d is out of range for uint32, min value accepted: %d", value, 0)
+	}
+	return uint32(value), nil
 }

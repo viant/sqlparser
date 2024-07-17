@@ -9,5 +9,5 @@ type Register struct {
 
 type RegisterSet struct {
 	Register
-	TTL int
+	TTL uint32
 }
