@@ -17,6 +17,8 @@ const (
 	KindRegisterSet  = "register set"
 	KindCreateTable  = "create table"
 	KindDropTable    = "drop table"
+	KindCreateIndex  = "create index"
+	KindDropIndex    = "drop index"
 )
 
 // Kind represents the type of SQL statement.
@@ -132,6 +134,8 @@ func ParseKind(SQL string) Kind {
 			switch secondToken[0] {
 			case 't': //drop table
 				return KindDropTable
+			case 'i':
+				return KindDropIndex
 			}
 		}
 	case 'r': //register
@@ -161,6 +165,8 @@ func ParseKind(SQL string) Kind {
 		switch secondToken[0] {
 		case 't': //create table
 			return KindCreateTable
+		case 'i':
+			return KindCreateIndex
 		}
 	}
 	return KindUnknown
