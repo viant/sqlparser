@@ -16,6 +16,7 @@ const (
 	parenthesesCode
 	nextCode
 	identifierCode
+	dotCode
 	starTokenCode
 	nullTokenCode
 	notOperator
@@ -59,10 +60,13 @@ const (
 	keyTokenCode
 	notNullToken
 	createTableToken
+	createToken
+	indexToken
 	defaultToken
 	ifNotExistsToken
 	ifExistsToken
 	dropTableToken
+	dropIndexToken
 	deleteCode
 	withKeyword
 	unionKeyword
@@ -140,6 +144,8 @@ var doubleQuotedStringLiteralMatcher = parsly.NewToken(doubleQuotedStringLiteral
 var intLiteralMatcher = parsly.NewToken(intLiteral, `INT`, smatcher.NewIntMatcher())
 var numericLiteralMatcher = parsly.NewToken(numericLiteral, `NUMERIC`, matcher.NewNumber())
 
+var dotMatcher = parsly.NewToken(dotCode, ".", matcher.NewByte('.'))
+
 var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIdentifier())
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector(false))
 var tableMatcher = parsly.NewToken(tableSelectorTokenCode, "TABLE MATCHER", smatcher.NewSelector(true))
@@ -169,10 +175,19 @@ var ifExistsMatcher = parsly.NewToken(ifExistsToken, "IF EXISTS", matcher.NewSpa
 var createTableMatcher = parsly.NewToken(createTableToken, "CREATE TABLE", matcher.NewSpacedSet([]string{
 	"create table"}, &option.Case{}))
 
+var createMatcher = parsly.NewToken(createToken, "CREATE", matcher.NewSpacedSet([]string{
+	"create"}, &option.Case{}))
+
+var indexMatcher = parsly.NewToken(indexToken, "INDEX", matcher.NewSpacedSet([]string{
+	"index"}, &option.Case{}))
+
 var defaultMatcher = parsly.NewToken(defaultToken, "DEFAULT", matcher.NewKeyword("default", &option.Case{}))
 
 var dropTableMatcher = parsly.NewToken(dropTableToken, "DROP TABLE", matcher.NewSpacedSet([]string{
 	"drop table"}, &option.Case{}))
+
+var dropIndexMatcher = parsly.NewToken(dropIndexToken, "DROP INDEX", matcher.NewSpacedSet([]string{
+	"drop index"}, &option.Case{}))
 
 var registerKeywordMatcher = parsly.NewToken(registerKeyword, "REGISTER", matcher.NewKeyword("register", &option.Case{}))
 

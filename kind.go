@@ -134,6 +134,7 @@ func ParseKind(SQL string) Kind {
 			switch secondToken[0] {
 			case 't': //drop table
 				return KindDropTable
+
 			case 'i':
 				return KindDropIndex
 			}
@@ -165,6 +166,10 @@ func ParseKind(SQL string) Kind {
 		switch secondToken[0] {
 		case 't': //create table
 			return KindCreateTable
+		case 'i':
+			return KindCreateIndex
+		}
+		switch thirdToken[0] {
 		case 'i':
 			return KindCreateIndex
 		}

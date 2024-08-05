@@ -6,6 +6,7 @@ import (
 	"github.com/viant/sqlparser/column"
 	del "github.com/viant/sqlparser/delete"
 	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/index"
 	"github.com/viant/sqlparser/insert"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
@@ -292,6 +293,38 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 			stringify(col, builder)
 		}
 		builder.WriteString(")")
+
+	case *index.Create:
+		builder.WriteString("CREATE ")
+		if actual.Type != "" {
+			builder.WriteString(actual.Type)
+			builder.WriteString(" ")
+		}
+
+		builder.WriteString("INDEX ")
+
+		if actual.IfDoesExists {
+			builder.WriteString("IF NOT EXISTS ")
+		}
+		builder.WriteString(actual.Name)
+		builder.WriteString(" ON ")
+
+		if actual.Schema != "" {
+			builder.WriteString(actual.Schema)
+			builder.WriteString(".")
+			builder.WriteString(actual.Table)
+		} else {
+			builder.WriteString(actual.Table)
+		}
+
+		builder.WriteString("(")
+		for i, col := range actual.Columns {
+			if i > 0 {
+				builder.WriteString(", ")
+			}
+			builder.WriteString(col.Name)
+		}
+		builder.WriteString(");")
 
 	case *column.Spec:
 		builder.WriteString(actual.Name)
