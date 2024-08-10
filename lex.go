@@ -74,6 +74,7 @@ const (
 	registerKeyword
 	typeKeyword
 	ttlKeyword
+	truncateTableKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -96,6 +97,7 @@ var inlineCommentMatcher = parsly.NewToken(commentBlock, "--", matcher.NewSeqBlo
 var selectKeywordMatcher = parsly.NewToken(selectKeyword, "SELECT", matcher.NewKeyword("select", &option.Case{}))
 var exceptKeywordMatcher = parsly.NewToken(exceptKeyword, "EXCEPT", matcher.NewKeyword("except", &option.Case{}))
 var betweenKeywordMatcher = parsly.NewToken(betweenToken, "BETWEEN", matcher.NewKeyword("between", &option.Case{}))
+var truncateKeywordMatcher = parsly.NewToken(truncateTableKeyword, "TRUNCATE", matcher.NewSpacedFragment("truncate table", &option.Case{}))
 
 var fromKeywordMatcher = parsly.NewToken(fromKeyword, "FROM", matcher.NewKeyword("from", &option.Case{}))
 var joinMatcher = parsly.NewToken(joinToken, "LEFT OUTER JOIN|LEFT JOIN|JOIN", matcher.NewSpacedSet([]string{

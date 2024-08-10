@@ -6,19 +6,20 @@ import (
 )
 
 const (
-	KindUnknown      = "unknown"
-	KindSelect       = "select"
-	KindLoad         = "load"
-	KindInsert       = "insert"
-	KindUpdate       = "update"
-	KindMerge        = "merge"
-	KindDelete       = "delete"
-	KindRegisterType = "register type"
-	KindRegisterSet  = "register set"
-	KindCreateTable  = "create table"
-	KindDropTable    = "drop table"
-	KindCreateIndex  = "create index"
-	KindDropIndex    = "drop index"
+	KindUnknown       = "unknown"
+	KindSelect        = "select"
+	KindLoad          = "load"
+	KindInsert        = "insert"
+	KindUpdate        = "update"
+	KindMerge         = "merge"
+	KindDelete        = "delete"
+	KindRegisterType  = "register type"
+	KindRegisterSet   = "register set"
+	KindCreateTable   = "create table"
+	KindDropTable     = "drop table"
+	KindCreateIndex   = "create index"
+	KindDropIndex     = "drop index"
+	KindTruncateTable = "truncate table"
 )
 
 // Kind represents the type of SQL statement.
@@ -139,6 +140,15 @@ func ParseKind(SQL string) Kind {
 				return KindDropIndex
 			}
 		}
+	case 't':
+		if len(secondToken) == 0 {
+			return KindUnknown
+		}
+		switch secondToken[0] {
+		case 't': //truncate
+			return KindTruncateTable
+		}
+
 	case 'r': //register
 		if len(secondToken) == 0 {
 			return KindUnknown

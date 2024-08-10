@@ -13,7 +13,7 @@ import (
 	"github.com/viant/sqlparser/update"
 )
 
-//TableName returns main table name
+// TableName returns main table name
 func TableName(node node.Node) string {
 	switch actual := node.(type) {
 	case *query.Select:
@@ -73,7 +73,35 @@ func trimEnclosure(node node.Node) string {
 	return name
 }
 
-//ParseDropTable parses drop table
+// ParseTruncateTable parses truncate table
+func ParseTruncateTable(SQL string) (*table.Truncate, error) {
+	result := &table.Truncate{}
+	SQL = removeSQLComments(SQL)
+	cursor := parsly.NewCursor("", []byte(SQL), 0)
+	err := parseTruncateTable(cursor, result)
+	if err != nil {
+		return result, fmt.Errorf("%s", SQL)
+	}
+	return result, err
+}
+
+func parseTruncateTable(cursor *parsly.Cursor, result *table.Truncate) error {
+	match := cursor.MatchAfterOptional(whitespaceMatcher, truncateKeywordMatcher)
+	if match.Code != truncateTableKeyword {
+		return cursor.NewError(truncateKeywordMatcher)
+	}
+	if match = cursor.MatchOne(whitespaceMatcher); match.Code != whitespaceCode {
+		return cursor.NewError(whitespaceMatcher)
+	}
+	match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+	if match.Code != identifierCode {
+		return cursor.NewError(identifierMatcher)
+	}
+	result.Table = match.Text(cursor)
+	return nil
+}
+
+// ParseDropTable parses drop table
 func ParseDropTable(SQL string) (*table.Drop, error) {
 	result := &table.Drop{}
 	SQL = removeSQLComments(SQL)
@@ -104,7 +132,7 @@ func parseDropTable(cursor *parsly.Cursor, dest *table.Drop) error {
 	return nil
 }
 
-//ParseCreateTable parses create table
+// ParseCreateTable parses create table
 func ParseCreateTable(SQL string) (*table.Create, error) {
 	result := &table.Create{}
 	SQL = removeSQLComments(SQL)
