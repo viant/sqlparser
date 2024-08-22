@@ -48,7 +48,7 @@ func (b *Binary) Walk(fn func(ident node.Node, values *Values, operator, parentO
 
 func (b *Binary) walk(fn func(ident node.Node, values *Values, operator, parentOperator string) error, operator string) error {
 	switch b.Op[0] {
-	case 'A', 'O':
+	case 'A', 'O', 'a', 'o':
 		if x, ok := b.X.(*Binary); ok {
 			if err := x.walk(fn, b.Op); err != nil {
 				return err
@@ -61,12 +61,24 @@ func (b *Binary) walk(fn func(ident node.Node, values *Values, operator, parentO
 		}
 		return nil
 	}
+
 	sel, values, err := b.Predicate()
 	if err != nil {
 		return err
 	}
-	return fn(sel, values, b.Op, operator)
+	err = fn(sel, values, b.Op, operator)
+	if err != nil {
+		return err
+	}
+	if binY, ok := b.Y.(*Binary); ok {
+		if nested, ok := binY.Y.(*Binary); ok {
+			if err = nested.walk(fn, b.Op); err != nil {
+				return err
+			}
+		}
 
+	}
+	return nil
 }
 
 // Predicate binary predicate or nil

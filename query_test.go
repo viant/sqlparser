@@ -5,10 +5,27 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/parsly"
+	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
 	"strings"
 	"testing"
 )
+
+func TestBinaryWalk(t *testing.T) {
+	query, _ := ParseQuery("SELECT * FROM t WHERE a = 1 AND b = 2 AND c IN(1,2)")
+	binary, ok := query.Qualify.X.(*expr.Binary)
+	if !assert.True(t, ok) {
+		return
+	}
+	var actualColumns = make([]string, 0)
+	binary.Walk(func(ident node.Node, values *expr.Values, operator, parentOperator string) error {
+		actualColumns = append(actualColumns, Stringify(ident))
+		return nil
+	})
+	assert.EqualValues(t, []string{"a", "b", "c"}, actualColumns)
+
+}
 
 func TestParseSelect(t *testing.T) {
 
@@ -312,6 +329,12 @@ func TestParseSelect(t *testing.T) {
 				description: "",
 				SQL:         `SELECT               ID,NAME  FROM AAA               ORDER BY 2 DESC, 1 ASC`,
 				expect:      `SELECT ID, NAME FROM AAA ORDER BY 2 DESC, 1 ASC`,
+			},
+
+			{
+				description: "",
+				SQL:         `SELECT col1, col2 FROM table1/tt t JOIN xx/e v ON v.ID=t.ID`,
+				expect:      `SELECT col1, col2 FROM table1/tt t JOIN xx/e v ON v.ID = t.ID`,
 			},
 		}
 
