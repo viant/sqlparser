@@ -72,7 +72,7 @@ func (b *Binary) walk(fn func(ident node.Node, values *Values, operator, parentO
 	}
 	if binY, ok := b.Y.(*Binary); ok {
 		if nested, ok := binY.Y.(*Binary); ok {
-			if err = nested.walk(fn, b.Op); err != nil {
+			if err = nested.walk(fn, binY.Op); err != nil {
 				return err
 			}
 		}
