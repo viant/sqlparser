@@ -97,9 +97,13 @@ func NewValues(n node.Node) (*Values, error) {
 		values.append(Value{Placeholder: true})
 		return &values, nil
 	case *Binary:
-		if actual.Y.(*Binary) != nil {
+		switch actualY := actual.Y.(type) {
+		case *Binary:
 			return NewValues(actual.X)
+		case *Parenthesis:
+			return NewValues(actualY.X)
 		}
+
 		return NewValues(actual.Y)
 	case *Literal:
 		switch actual.Kind {
@@ -153,6 +157,14 @@ func NewValues(n node.Node) (*Values, error) {
 			values.append(vMax.X...)
 			return &values, nil
 		}
+	case []node.Node:
+		for _, item := range actual {
+			if aValue, ok := item.(*Literal); ok {
+				v, _ := NewValue(aValue.Value)
+				values.append(*v)
+			}
+		}
+		return &values, nil
 	}
 
 	return nil, fmt.Errorf("unsupported value node: %T", n)
