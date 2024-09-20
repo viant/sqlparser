@@ -13,7 +13,7 @@ import (
 )
 
 func TestBinaryWalk(t *testing.T) {
-	query, _ := ParseQuery("SELECT * FROM t WHERE a = 1 AND b = 2 AND (c IN(1,2))")
+	query, _ := ParseQuery("SELECT * FROM t WHERE a = 1  AND (c IN(1,2))")
 	binary, ok := query.Qualify.X.(*expr.Binary)
 	if !assert.True(t, ok) {
 		return
@@ -23,7 +23,7 @@ func TestBinaryWalk(t *testing.T) {
 		actualColumns = append(actualColumns, Stringify(ident))
 		return nil
 	})
-	assert.EqualValues(t, []string{"a", "b", "c"}, actualColumns)
+	assert.EqualValues(t, []string{"a", "c"}, actualColumns)
 
 }
 

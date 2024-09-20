@@ -40,6 +40,13 @@ func (b *Binary) Walk(fn func(ident node.Node, values *Values, operator, parentO
 				return err
 			}
 		}
+		if y, ok := b.Y.(*Parenthesis); ok {
+			if nested, ok := y.X.(*Binary); ok {
+				if err := nested.walk(fn, b.Op); err != nil {
+					return err
+				}
+			}
+		}
 		return nil
 	}
 	return b.walk(fn, "")
