@@ -84,14 +84,13 @@ func (b *Binary) walk(fn func(ident node.Node, values *Values, operator, parentO
 				return err
 			}
 		}
-		if nested, ok := binY.Y.(*Parenthesis); ok {
-			if nestedBin, ok := nested.X.(*Binary); ok {
-				if err = nestedBin.walk(fn, binY.Op); err != nil {
-					return err
-				}
+	}
+	if nested, ok := b.Y.(*Parenthesis); ok {
+		if nestedBin, ok := nested.X.(*Binary); ok {
+			if err = nestedBin.walk(fn, b.Op); err != nil {
+				return err
 			}
 		}
-
 	}
 	return nil
 }
