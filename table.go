@@ -32,6 +32,42 @@ func TableName(node node.Node) string {
 	return ""
 }
 
+// TableSelector returns the table selector Node
+func TableSelector(n node.Node) *expr.Selector {
+	switch actual := n.(type) {
+	case *query.Select:
+		return queryTableSelector(actual)
+	case *insert.Statement:
+		return extractSelector(actual.Target.X)
+	case *update.Statement:
+		return extractSelector(actual.Target.X)
+	case *del.Statement:
+		return extractSelector(actual.Target.X)
+	case *table.Create:
+		return extractSelector(actual.Spec.Name)
+	case *table.Drop:
+		return extractSelector(actual.Name)
+	}
+	return nil
+}
+
+func queryTableSelector(s *query.Select) *expr.Selector {
+	if s.From.X == nil {
+		return nil
+	}
+	return extractSelector(s.From.X)
+}
+
+func extractSelector(node node.Node) *expr.Selector {
+	switch t := node.(type) {
+	case *expr.Selector:
+		return t
+	case *expr.Ident:
+		return &expr.Selector{Name: t.Name}
+	}
+	return nil
+}
+
 func queryTableName(sel *query.Select) string {
 	if sel.From.X == nil {
 		return ""
