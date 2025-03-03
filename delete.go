@@ -7,7 +7,7 @@ import (
 	"github.com/viant/sqlparser/query"
 )
 
-//ParseDelete parses DELETE statement
+// ParseDelete parses DELETE statement
 func ParseDelete(SQL string) (*del.Statement, error) {
 	aStmt := &del.Statement{}
 	cursor := parsly.NewCursor("", []byte(SQL), 0)
@@ -40,7 +40,7 @@ func parseDelete(cursor *parsly.Cursor, stmt *del.Statement) error {
 }
 
 func buildDeleteTarget(stmt *del.Statement, cursor *parsly.Cursor) (int, error) {
-	matchable := []*parsly.Token{whereKeywordMatcher, joinMatcher, selectorMatcher}
+	matchable := []*parsly.Token{whereKeywordMatcher, joinMatcher, tableMatcher}
 
 	var targetData []string
 	lastMatched := parsly.Invalid
@@ -54,7 +54,7 @@ func buildDeleteTarget(stmt *del.Statement, cursor *parsly.Cursor) (int, error) 
 			stmt.Target = buildTarget(targetData, cursor)
 			return lastMatched, nil
 
-		case selectorTokenCode:
+		case tableTokenCode:
 			targetData = append(targetData, matched.Text(cursor))
 			if len(targetData) >= 2 {
 				matchable = matchable[:len(matchable)-1]
