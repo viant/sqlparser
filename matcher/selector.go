@@ -5,7 +5,7 @@ import (
 )
 
 type selector struct {
-	allowsDashes bool
+	isTable bool
 }
 
 // Match matches a string
@@ -40,7 +40,18 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 	} else {
 		return 0
 	}
+
+	inExpr := false
 	for i := pos; i < size; i++ {
+
+		if inExpr {
+			matched++
+			if input[i] == ']' {
+				inExpr = false
+			}
+			continue
+		}
+
 		switch input[i] {
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_', '.', ':', '$', '/':
 			matched++
@@ -53,17 +64,22 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 			return matched
 
 		case '-':
-			if !n.allowsDashes {
+			if !n.isTable {
 				return matched
 			}
 
 			matched++
+		case '[':
+			if !n.isTable {
+				return matched
+			}
+			matched++
+			inExpr = true
 		default:
 			if IsLetter(input[i]) {
 				matched++
 				continue
 			}
-
 			return matched
 		}
 	}
@@ -71,9 +87,8 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 	return matched
 }
 
-// NewSelector creates a selector matcher
 func NewSelector(allowDashes bool) parsly.Matcher {
 	return &selector{
-		allowsDashes: allowDashes,
+		isTable: allowDashes,
 	}
 }

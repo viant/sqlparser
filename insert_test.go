@@ -36,6 +36,12 @@ func TestParseInsert(t *testing.T) {
 			SQL:         "INSERT INTO CI_AD_ORDER(ID, VAL, SVAL) VALUES(?, ?, ?), (?, ?, ?) AS new ON DUPLICATE KEY UPDATE VAL = VAL + new.VAL, SVAL = SAVL + new.VAL",
 			expect:      "INSERT INTO CI_AD_ORDER (ID, VAL, SVAL) VALUES(?, ?, ?), (?, ?, ?) AS new ON DUPLICATE KEY UPDATE VAL = VAL + new.VAL, SVAL = SAVL + new.VAL",
 		},
+
+		{
+			description: "",
+			SQL:         `INSERT INTO table1[id=?].tt(ID, VAL, SVAL) VALUES(?, ?, ?) `,
+			expect:      `INSERT INTO table1[id=?].tt (ID, VAL, SVAL) VALUES(?, ?, ?)`,
+		},
 	}
 
 	//for _, testCase := range testCases[len(testCases)-1:] {

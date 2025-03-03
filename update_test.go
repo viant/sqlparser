@@ -25,6 +25,11 @@ func TestParseUpdate(t *testing.T) {
 			SQL:         "UPDATE users SET name = 'Smith', value=value+?, last_access_time = ? WHERE id = 2",
 			expect:      "UPDATE users SET name = 'Smith', value = value + ?, last_access_time = ? WHERE id = 2",
 		},
+		{
+			description: "incremental update",
+			SQL:         "UPDATE table1[id=?].tt SET name = 'Smith', value= ?, last_access_time = ? WHERE id = 2",
+			expect:      "UPDATE table1[id=?].tt SET name = 'Smith', value = ?, last_access_time = ? WHERE id = 2",
+		},
 	}
 
 	//for _, testCase := range testCases[len(testCases)-1:] {

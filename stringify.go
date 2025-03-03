@@ -190,6 +190,11 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		stringify(actual.Max, builder)
 	case *expr.Selector:
 		builder.WriteString(actual.Name)
+		if actual.Expression != "" {
+			builder.WriteString("[")
+			builder.WriteString(actual.Expression)
+			builder.WriteString("]")
+		}
 		if actual.X != nil {
 			builder.WriteByte('.')
 		}

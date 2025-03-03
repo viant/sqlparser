@@ -19,9 +19,9 @@ func parseInsert(cursor *parsly.Cursor, stmt *insert.Statement) error {
 	match := cursor.MatchAfterOptional(whitespaceMatcher, insertIntoKeywordMatcher)
 	switch match.Code {
 	case insertIntoKeyword:
-		match = cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher)
 		switch match.Code {
-		case selectorTokenCode:
+		case tableTokenCode:
 			sel := match.Text(cursor)
 			stmt.Target.X = expr.NewSelector(sel)
 			match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher)

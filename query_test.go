@@ -336,6 +336,11 @@ func TestParseSelect(t *testing.T) {
 				SQL:         `SELECT col1, col2 FROM table1/tt t JOIN xx/e v ON v.ID=t.ID`,
 				expect:      `SELECT col1, col2 FROM table1/tt t JOIN xx/e v ON v.ID = t.ID`,
 			},
+			{
+				description: "",
+				SQL:         `SELECT col1, col2 FROM table1[id=?].tt t JOIN xx/e v ON v.ID=t.ID`,
+				expect:      `SELECT col1, col2 FROM table1[id=?].tt t JOIN xx/e v ON v.ID = t.ID`,
+			},
 		}
 
 		for _, testCase := range testCases {

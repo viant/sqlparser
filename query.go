@@ -94,7 +94,7 @@ beginMatch:
 			dest.From = query.From{}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher, parenthesesMatcher)
 			switch match.Code {
-			case tableSelectorTokenCode:
+			case tableTokenCode:
 				identityOrAlias := match.Text(cursor)
 				withSelect := dest.WithSelects.Select(identityOrAlias)
 				if withSelect != nil {

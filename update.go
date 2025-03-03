@@ -18,9 +18,9 @@ func parseUpdate(cursor *parsly.Cursor, stmt *update.Statement) error {
 	match := cursor.MatchAfterOptional(whitespaceMatcher, updateKeywordMatcher)
 	switch match.Code {
 	case updateKeyword:
-		match = cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher)
 		switch match.Code {
-		case selectorTokenCode:
+		case tableTokenCode:
 			stmt.Target = extractTarget(cursor, match)
 			match = cursor.MatchAfterOptional(whitespaceMatcher, setKeywordMatcher)
 			if match.Code != setKeyword {
