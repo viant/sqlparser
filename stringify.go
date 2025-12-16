@@ -3,6 +3,8 @@ package sqlparser
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"github.com/viant/sqlparser/column"
 	del "github.com/viant/sqlparser/delete"
 	"github.com/viant/sqlparser/expr"
@@ -12,7 +14,6 @@ import (
 	"github.com/viant/sqlparser/query"
 	"github.com/viant/sqlparser/table"
 	"github.com/viant/sqlparser/update"
-	"strings"
 )
 
 // Stringify stringifies node
@@ -30,6 +31,26 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 	case string:
 		builder.WriteString(actual)
 	case *query.Select:
+		if len(actual.WithSelects) > 0 {
+			builder.WriteString("WITH ")
+			for i, withSel := range actual.WithSelects {
+				if i > 0 {
+					builder.WriteString(", ")
+				}
+				builder.WriteString(withSel.Alias)
+				builder.WriteString(" AS ")
+				if withSel.Raw != "" {
+					builder.WriteString(withSel.Raw)
+				} else if withSel.X != nil {
+					builder.WriteString("(")
+					stringify(withSel.X, builder)
+					builder.WriteString(")")
+				} else {
+					builder.WriteString("()")
+				}
+			}
+			builder.WriteString(" ")
+		}
 		builder.WriteString("SELECT ")
 		stringify(actual.List, builder)
 		builder.WriteString(" FROM ")
