@@ -3,13 +3,14 @@ package sqlparser
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
-	"strings"
-	"testing"
 )
 
 func TestBinaryWalk(t *testing.T) {
@@ -69,7 +70,7 @@ func TestParseSelect(t *testing.T) {
 				description: "with syntax",
 				SQL: `WITH p AS (SELECT * FROM product), v AS (SELECT * FROM vendor)
 				SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
-				expect: `SELECT p.*, v.* FROM (SELECT * FROM product) p JOIN (SELECT * FROM vendor) v ON p.VENDOR_ID = v.ID`,
+				expect: `WITH p AS (SELECT * FROM product), v AS (SELECT * FROM vendor) SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
 			},
 
 			{
@@ -359,6 +360,7 @@ func TestParseSelect(t *testing.T) {
 			actual := strings.TrimSpace(Stringify(query))
 			if !assert.EqualValues(t, testCase.expect, actual) {
 				data, _ := json.Marshal(query)
+				fmt.Printf("failed test case: %s\n", testCase.description)
 				fmt.Printf("%s\n", data)
 			}
 		}

@@ -39,17 +39,18 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				}
 				builder.WriteString(withSel.Alias)
 				builder.WriteString(" AS ")
-				if withSel.Raw != "" {
+				switch {
+				case withSel.Raw != "":
 					builder.WriteString(withSel.Raw)
-				} else if withSel.X != nil {
-					builder.WriteString("(")
+				case withSel.X != nil:
+					builder.WriteByte('(')
 					stringify(withSel.X, builder)
-					builder.WriteString(")")
-				} else {
+					builder.WriteByte(')')
+				default:
 					builder.WriteString("()")
 				}
 			}
-			builder.WriteString(" ")
+			builder.WriteByte(' ')
 		}
 		builder.WriteString("SELECT ")
 		stringify(actual.List, builder)
@@ -210,16 +211,24 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(" AND ")
 		stringify(actual.Max, builder)
 	case *expr.Selector:
-		builder.WriteString(actual.Name)
-		if actual.Expression != "" {
-			builder.WriteString("[")
+		name := actual.Name
+		if actual.Expression == "" {
+			builder.WriteString(name)
+		} else if strings.HasPrefix(name, "`") && strings.HasSuffix(name, "`") && len(name) > 1 {
+			builder.WriteString(name[:len(name)-1])
+			builder.WriteByte('[')
 			builder.WriteString(actual.Expression)
-			builder.WriteString("]")
+			builder.WriteString("]`")
+		} else {
+			builder.WriteString(name)
+			builder.WriteByte('[')
+			builder.WriteString(actual.Expression)
+			builder.WriteByte(']')
 		}
 		if actual.X != nil {
 			builder.WriteByte('.')
+			stringify(actual.X, builder)
 		}
-		stringify(actual.X, builder)
 	case *update.Item:
 		stringify(actual.Column, builder)
 		builder.WriteString(" = ")

@@ -1,8 +1,9 @@
 package expr
 
 import (
-	"github.com/viant/sqlparser/node"
 	"strings"
+
+	"github.com/viant/sqlparser/node"
 )
 
 // Selector represent identifier selector
@@ -24,9 +25,11 @@ func NewSelector(name string) node.Node {
 		name = strings.Replace(name, expr, "", 1)
 		expr = expr[1 : len(expr)-1]
 	}
-
 	part := strings.Index(name, ".")
 	if part == -1 {
+		if expr != "" {
+			return &Selector{Name: name, Expression: expr}
+		}
 		return &Ident{Name: name}
 	}
 	return &Selector{Name: name[:part], X: NewSelector(name[part+1:]), Expression: expr}

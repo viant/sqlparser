@@ -3,10 +3,11 @@ package sqlparser
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/query"
-	"strings"
 )
 
 // ParseQuery parses query
@@ -93,15 +94,18 @@ beginMatch:
 		case fromKeyword:
 			dest.From = query.From{}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher, parenthesesMatcher)
+			var skipAlias bool
 			switch match.Code {
 			case tableTokenCode:
 				identityOrAlias := match.Text(cursor)
 				withSelect := dest.WithSelects.Select(identityOrAlias)
 				if withSelect != nil {
-					dest.From.X = expr.NewParenthesis(withSelect.Raw)
-					dest.From.Alias = identityOrAlias
+					dest.From.X = expr.NewSelector(identityOrAlias)
+					dest.From.Alias = ""
+					skipAlias = true
 				} else {
 					dest.From.X = expr.NewSelector(identityOrAlias)
+					skipAlias = false
 				}
 			case parenthesesCode:
 				dest.From.X = expr.NewRaw(match.Text(cursor))
@@ -116,7 +120,7 @@ beginMatch:
 				}
 				rawNode.X = subSelect
 			}
-			if dest.From.Alias == "" {
+			if dest.From.Alias == "" && !skipAlias {
 				dest.From.Alias = discoverAlias(cursor)
 			}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher)
