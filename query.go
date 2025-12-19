@@ -94,7 +94,6 @@ beginMatch:
 		case fromKeyword:
 			dest.From = query.From{}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher, parenthesesMatcher)
-			var skipAlias bool
 			switch match.Code {
 			case tableTokenCode:
 				identityOrAlias := match.Text(cursor)
@@ -102,10 +101,8 @@ beginMatch:
 				if withSelect != nil {
 					dest.From.X = expr.NewSelector(identityOrAlias)
 					dest.From.Alias = ""
-					skipAlias = true
 				} else {
 					dest.From.X = expr.NewSelector(identityOrAlias)
-					skipAlias = false
 				}
 			case parenthesesCode:
 				dest.From.X = expr.NewRaw(match.Text(cursor))
@@ -120,7 +117,7 @@ beginMatch:
 				}
 				rawNode.X = subSelect
 			}
-			if dest.From.Alias == "" && !skipAlias {
+			if dest.From.Alias == "" {
 				dest.From.Alias = discoverAlias(cursor)
 			}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher)

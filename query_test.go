@@ -72,6 +72,12 @@ func TestParseSelect(t *testing.T) {
 				SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
 				expect: `WITH p AS (SELECT * FROM product), v AS (SELECT * FROM vendor) SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
 			},
+			{
+				description: "with join alias",
+				SQL: `WITH audiences AS (SELECT 1 AS id)
+  				SELECT ar.id FROM foo f JOIN audiences ar ON ar.id = f.id`,
+				expect: `WITH audiences AS (SELECT 1 AS id) SELECT ar.id FROM foo f JOIN audiences ar ON ar.id = f.id`,
+			},
 
 			{
 				description: "group by",

@@ -8,7 +8,6 @@ import (
 
 func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expectOn bool) error {
 	match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, exprMatcher, selectorMatcher)
-	var skipAlias bool
 	switch match.Code {
 	case parenthesesCode:
 		join.With = expr.NewRaw(match.Text(cursor))
@@ -18,17 +17,9 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 		if match.Code == parenthesesCode {
 			identityOrAlias += match.Text(cursor)
 		}
-		withSelect := dest.WithSelects.Select(identityOrAlias)
-		if withSelect != nil {
-			join.With = expr.NewSelector(identityOrAlias)
-			join.Alias = ""
-			skipAlias = true
-		} else {
-			join.With = expr.NewSelector(identityOrAlias)
-			skipAlias = false
-		}
+		join.With = expr.NewSelector(identityOrAlias)
 	}
-	if join.Alias == "" && !skipAlias {
+	if join.Alias == "" {
 		join.Alias = discoverAlias(cursor)
 	}
 	match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher, onKeywordMatcher)
