@@ -32,7 +32,11 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(actual)
 	case *query.Select:
 		if len(actual.WithSelects) > 0 {
-			builder.WriteString("WITH ")
+			if actual.WithRecursive {
+				builder.WriteString("WITH RECURSIVE ")
+			} else {
+				builder.WriteString("WITH ")
+			}
 			for i, withSel := range actual.WithSelects {
 				if i > 0 {
 					builder.WriteString(", ")

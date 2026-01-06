@@ -69,6 +69,7 @@ const (
 	dropIndexToken
 	deleteCode
 	withKeyword
+	recursiveKeyword
 	unionKeyword
 	globalKeyword
 	registerKeyword
@@ -156,6 +157,7 @@ var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatc
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
 
 var withKeywordMatcher = parsly.NewToken(withKeyword, "WITH", matcher.NewKeyword("with", &option.Case{}))
+var recursiveKeywordMatcher = parsly.NewToken(recursiveKeyword, "RECURSIVE", matcher.NewKeyword("recursive", &option.Case{}))
 var unionMatcher = parsly.NewToken(unionKeyword, "UNION|UNION ALL", matcher.NewSpacedSet([]string{
 	"union all",
 	"union",

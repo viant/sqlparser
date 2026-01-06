@@ -7,19 +7,20 @@ import (
 type (
 	//Select represent a select
 	Select struct {
-		List        List
-		From        From
-		Joins       []*Join
-		Qualify     *expr.Qualify
-		GroupBy     List
-		Having      *expr.Qualify
-		OrderBy     List
-		Window      *expr.Raw
-		Limit       *expr.Literal
-		Offset      *expr.Literal
-		Kind        string
-		Union       *Union
-		WithSelects WithSelects
+		List          List
+		From          From
+		Joins         []*Join
+		Qualify       *expr.Qualify
+		GroupBy       List
+		Having        *expr.Qualify
+		OrderBy       List
+		Window        *expr.Raw
+		Limit         *expr.Literal
+		Offset        *expr.Literal
+		Kind          string
+		Union         *Union
+		WithRecursive bool
+		WithSelects   WithSelects
 	}
 
 	//WithSelects represents with selects

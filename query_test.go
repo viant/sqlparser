@@ -73,6 +73,11 @@ func TestParseSelect(t *testing.T) {
 				expect: `WITH p AS (SELECT * FROM product), v AS (SELECT * FROM vendor) SELECT p.*, v.* FROM p JOIN v ON p.VENDOR_ID = v.ID`,
 			},
 			{
+				description: "with recursive syntax",
+				SQL:         `WITH RECURSIVE sub AS (SELECT 1 AS id FROM DUAL UNION ALL SELECT id + 1 AS id FROM sub WHERE id < 5) SELECT t.id FROM sub t WHERE 1=1`,
+				expect:      `WITH RECURSIVE sub AS (SELECT 1 AS id FROM DUAL UNION ALL SELECT id + 1 AS id FROM sub WHERE id < 5) SELECT t.id FROM sub t WHERE 1 = 1`,
+			},
+			{
 				description: "with join alias",
 				SQL: `WITH audiences AS (SELECT 1 AS id)
   				SELECT ar.id FROM foo f JOIN audiences ar ON ar.id = f.id`,

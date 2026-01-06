@@ -49,10 +49,20 @@ beginMatch:
 		if len(dest.WithSelects) > 0 {
 			return cursor.NewError(asKeywordMatcher, selectorMatcher)
 		}
+		allowRecursive := true
 	With:
 		withSelect := &query.WithSelect{X: &query.Select{}}
 		dest.WithSelects = append(dest.WithSelects, withSelect)
-		match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+		if allowRecursive {
+			match = cursor.MatchAfterOptional(whitespaceMatcher, recursiveKeywordMatcher, identifierMatcher)
+			if match.Code == recursiveKeyword {
+				dest.WithRecursive = true
+				match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+			}
+			allowRecursive = false
+		} else {
+			match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+		}
 		if match.Code != identifierCode {
 			return cursor.NewError(identifierMatcher)
 		}
