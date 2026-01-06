@@ -134,7 +134,7 @@ var insertIntoKeywordMatcher = parsly.NewToken(insertIntoKeyword, "INSERT INTO",
 
 var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", matcher.NewKeyword("values", &option.Case{}))
 
-var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", ">=", "<=", "=", "-", ">", "<", "*", "/", "in", "not in", "is not", "is", "like"}, &option.Case{}))
+var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "=", "-", ">", "<", "*", "/", "in", "not in", "is not", "is", "like"}, &option.Case{}))
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", matcher.NewSet([]string{"and", "or"}, &option.Case{}))
