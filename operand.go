@@ -146,7 +146,9 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 			return nil, cursor.NewError(selectorMatcher)
 		}
 		return unary, nil
-	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode, commentBlock:
+	case commentBlock:
+		return expectOperand(cursor)
+	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
 		cursor.Pos = pos
 	}
 	return nil, nil

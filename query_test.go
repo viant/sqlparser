@@ -105,6 +105,19 @@ func TestParseSelect(t *testing.T) {
 				SQL:         `SELECT user.* FROM (SELECT t.* FROM USER t  ) user /* {"Self":{"Holder":"Team", "Child":"ID", "Parent":"MGR_ID" }} */ `,
 				expect:      `SELECT user.* FROM  (SELECT t.* FROM USER t  )  user /* {"Self":{"Holder":"Team", "Child":"ID", "Parent":"MGR_ID" }} */`,
 			},
+			{
+				description: "legacy-sql hint in subquery",
+				SQL: `SELECT
+				    a.*
+				FROM (
+				    SELECT /*+ {\"UseLegacySql\": true} +*/
+				        '' AS a
+				) a`,
+				expect: `SELECT a.* FROM  (
+				    SELECT /*+ {\"UseLegacySql\": true} +*/
+				        '' AS a
+				)  a`,
+			},
 
 			{
 				description: "bq table select",
