@@ -69,6 +69,7 @@ const (
 	dropIndexToken
 	deleteCode
 	withKeyword
+	recursiveKeyword
 	unionKeyword
 	globalKeyword
 	registerKeyword
@@ -133,7 +134,7 @@ var insertIntoKeywordMatcher = parsly.NewToken(insertIntoKeyword, "INSERT INTO",
 
 var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", matcher.NewKeyword("values", &option.Case{}))
 
-var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", ">=", "<=", "=", "-", ">", "<", "*", "/", "in", "not in", "is not", "is", "like"}, &option.Case{}))
+var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "=", "-", ">", "<", "*", "/", "in", "not in", "is not", "is", "like"}, &option.Case{}))
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", matcher.NewSet([]string{"and", "or"}, &option.Case{}))
@@ -156,6 +157,7 @@ var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatc
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
 
 var withKeywordMatcher = parsly.NewToken(withKeyword, "WITH", matcher.NewKeyword("with", &option.Case{}))
+var recursiveKeywordMatcher = parsly.NewToken(recursiveKeyword, "RECURSIVE", matcher.NewKeyword("recursive", &option.Case{}))
 var unionMatcher = parsly.NewToken(unionKeyword, "UNION|UNION ALL", matcher.NewSpacedSet([]string{
 	"union all",
 	"union",
