@@ -26,7 +26,10 @@ func discoverAlias(cursor *parsly.Cursor) string {
 func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 	literal, err := TryParseLiteral(cursor)
 	if literal != nil || err != nil {
-		return literal, err
+		if err != nil {
+			return literal, err
+		}
+		return applyCollate(cursor, literal)
 	}
 
 	match := cursor.MatchAfterOptional(whitespaceMatcher,
@@ -64,7 +67,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 			if err != nil {
 				return nil, err
 			}
-			return &expr.Call{X: selector, Raw: raw, Args: args}, nil
+			return applyCollate(cursor, &expr.Call{X: selector, Raw: raw, Args: args})
 
 		case exceptKeyword:
 			return parseStarExpr(cursor, selRaw, selector)
@@ -75,15 +78,15 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 			if match.Code == commentBlock {
 				comments = match.Text(cursor)
 			}
-			return expr.NewStar(selector, comments), nil
+			return applyCollate(cursor, expr.NewStar(selector, comments))
 		}
-		return selector, nil
+		return applyCollate(cursor, selector)
 	case exceptKeyword:
 		return nil, cursor.NewError(selectorMatcher)
 	case nullTokenCode:
-		return expr.NewNullLiteral(match.Text(cursor)), nil
+		return applyCollate(cursor, expr.NewNullLiteral(match.Text(cursor)))
 	case caseBlock:
-		return &expr.Switch{Raw: match.Text(cursor)}, nil
+		return applyCollate(cursor, &expr.Switch{Raw: match.Text(cursor)})
 	case starTokenCode:
 		selRaw := match.Text(cursor)
 		selector := expr.NewSelector(selRaw)
@@ -97,7 +100,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		case exceptKeyword:
 			return parseStarExpr(cursor, selRaw, selector)
 		}
-		return expr.NewStar(selector, comments), err
+		return applyCollate(cursor, expr.NewStar(selector, comments))
 	case parenthesesCode:
 		raw := match.Text(cursor)
 		result := expr.NewParenthesis(raw)
@@ -139,19 +142,36 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 			}
 
 		}
-		return result, nil
+		return applyCollate(cursor, result)
 	case notOperator:
 		unary := expr.NewUnary(match.Text(cursor))
 		if unary.X, err = expectOperand(cursor); unary.X == nil || err != nil {
 			return nil, cursor.NewError(selectorMatcher)
 		}
-		return unary, nil
+		return applyCollate(cursor, unary)
 	case commentBlock:
 		return expectOperand(cursor)
 	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
 		cursor.Pos = pos
 	}
 	return nil, nil
+}
+
+func applyCollate(cursor *parsly.Cursor, n node.Node) (node.Node, error) {
+	if n == nil {
+		return nil, nil
+	}
+	pos := cursor.Pos
+	match := cursor.MatchAfterOptional(whitespaceMatcher, collateKeywordMatcher)
+	if match.Code != collateKeyword {
+		cursor.Pos = pos
+		return n, nil
+	}
+	match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
+	if match.Code != identifierCode {
+		return nil, cursor.NewError(identifierMatcher)
+	}
+	return &expr.Collate{X: n, Collation: match.Text(cursor)}, nil
 }
 
 func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node, error) {

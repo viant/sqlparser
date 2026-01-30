@@ -105,6 +105,8 @@ func NewValues(n node.Node) (*Values, error) {
 		}
 
 		return NewValues(actual.Y)
+	case *Collate:
+		return NewValues(actual.X)
 	case *Literal:
 		switch actual.Kind {
 		case "int":

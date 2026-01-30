@@ -76,6 +76,7 @@ const (
 	typeKeyword
 	ttlKeyword
 	truncateTableKeyword
+	collateKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -116,6 +117,7 @@ var keyMatcher = parsly.NewToken(keyTokenCode, "[RANGE|HASH|PRIMARY] KEY", match
 }, &option.Case{}))
 
 var onKeywordMatcher = parsly.NewToken(onKeyword, "ON", matcher.NewKeyword("on", &option.Case{}))
+var collateKeywordMatcher = parsly.NewToken(collateKeyword, "COLLATE", matcher.NewKeyword("collate", &option.Case{}))
 
 var whereKeywordMatcher = parsly.NewToken(whereKeyword, "WHERE", matcher.NewKeyword("where", &option.Case{}))
 var groupByMatcher = parsly.NewToken(groupByKeyword, "GROUP BY", matcher.NewSpacedFragment("group by", &option.Case{}))

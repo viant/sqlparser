@@ -254,6 +254,16 @@ func TestParseSelect(t *testing.T) {
 				expect:      "SELECT t.* FROM x1 t join x2 z ON t.ID = z.ID",
 			},
 			{
+				description: "JOIN select with collate",
+				SQL:         "SELECT * FROM a JOIN b ON a.brand COLLATE utf8mb4_bin = b.brand COLLATE utf8mb4_bin",
+				expect:      "SELECT * FROM a JOIN b ON a.brand COLLATE utf8mb4_bin = b.brand COLLATE utf8mb4_bin",
+			},
+			{
+				description: "JOIN select with collate parenthesis",
+				SQL:         "SELECT * FROM a JOIN b ON (a.brand COLLATE utf8mb4_bin) = (b.brand COLLATE utf8mb4_bin)",
+				expect:      "SELECT * FROM a JOIN b ON (a.brand COLLATE utf8mb4_bin) = (b.brand COLLATE utf8mb4_bin)",
+			},
+			{
 				description: "JOIN select",
 				SQL:         "SELECT t.* FROM x1 t join x2 z ON t.ID = z.ID LEFT JOIN x3 y ON t.ID = x3.ID",
 				expect:      "SELECT t.* FROM x1 t join x2 z ON t.ID = z.ID LEFT JOIN x3 y ON t.ID = x3.ID",

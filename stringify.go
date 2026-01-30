@@ -157,6 +157,10 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(actual.Raw)
 		builder.WriteString(" ")
 		builder.WriteString(actual.Unparsed)
+	case *expr.Collate:
+		stringify(actual.X, builder)
+		builder.WriteString(" COLLATE ")
+		builder.WriteString(actual.Collation)
 	case *query.From:
 		if actual.X == nil {
 			return
