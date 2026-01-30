@@ -274,6 +274,21 @@ func TestParseSelect(t *testing.T) {
 				SQL:         "SELECT t.* FROM x t WHERE 1=1 AND (x=2)",
 				expect:      "SELECT t.* FROM x t WHERE 1 = 1 AND (x=2)",
 			},
+			{
+				description: "where not equal with order by",
+				SQL:         "SELECT t.* FROM x t WHERE a <> b ORDER BY c",
+				expect:      "SELECT t.* FROM x t WHERE a <> b ORDER BY c",
+			},
+			{
+				description: "where not equal without spaces with order by",
+				SQL:         "SELECT t.* FROM x t WHERE a<>b ORDER BY c",
+				expect:      "SELECT t.* FROM x t WHERE a <> b ORDER BY c",
+			},
+			{
+				description: "where not equal placeholder with order by",
+				SQL:         "SELECT t.* FROM x t WHERE a <> $b ORDER BY c",
+				expect:      "SELECT t.* FROM x t WHERE a <> $b ORDER BY c",
+			},
 
 			{
 				description: "func call select",

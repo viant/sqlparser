@@ -12,7 +12,7 @@ import (
 	"github.com/viant/sqlparser/update"
 )
 
-//Traverse traverse node
+// Traverse traverse node
 func Traverse(n node.Node, visitor func(n node.Node) bool) {
 	traverse(n, visitor)
 }
@@ -104,6 +104,11 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 		}
 	case *expr.Ident:
 	case *expr.Call:
+		traverse(actual.X, visitor)
+		for _, arg := range actual.Args {
+			traverse(arg, visitor)
+		}
+	case *expr.Collate:
 		traverse(actual.X, visitor)
 	case *expr.Range:
 		traverse(actual.Min, visitor)
