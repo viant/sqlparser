@@ -5,12 +5,12 @@ import (
 	"github.com/viant/sqlparser/expr"
 )
 
-//ParseLiteral parses literal
+// ParseLiteral parses literal
 func ParseLiteral(cursor *parsly.Cursor) (*expr.Literal, error) {
 	return parseLiteral(cursor, true)
 }
 
-//TryParseLiteral tries to parse literal
+// TryParseLiteral tries to parse literal
 func TryParseLiteral(cursor *parsly.Cursor) (*expr.Literal, error) {
 	return parseLiteral(cursor, false)
 }
@@ -20,6 +20,7 @@ var literalTokens = []*parsly.Token{
 	nextMatcher,
 	nullKeywordMatcher,
 	boolLiteralMatcher,
+	rawSingleQuotedStringLiteralMatcher,
 	doubleQuotedStringLiteralMatcher,
 	singleQuotedStringLiteralMatcher,
 	intLiteralMatcher,
@@ -34,7 +35,7 @@ func parseLiteral(cursor *parsly.Cursor, shallRaiseInvalidToken bool) (*expr.Lit
 		return nil, nil
 	case nullKeyword:
 		return expr.NewNullLiteral(match.Text(cursor)), nil
-	case singleQuotedStringLiteral, doubleQuotedStringLiteral:
+	case singleQuotedStringLiteral, rawSingleQuotedStringLiteral, doubleQuotedStringLiteral:
 		return expr.NewStringLiteral(match.Text(cursor)), nil
 	case boolLiteral:
 		return expr.NewBoolLiteral(match.Text(cursor)), nil

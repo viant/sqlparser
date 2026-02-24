@@ -125,7 +125,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 					list = append(list, &expr.Placeholder{Name: matched.Text(exprCursor)})
 				case nullKeyword:
 					list = append(list, expr.NewNullLiteral(matched.Text(exprCursor)))
-				case singleQuotedStringLiteral, doubleQuotedStringLiteral:
+				case singleQuotedStringLiteral, rawSingleQuotedStringLiteral, doubleQuotedStringLiteral:
 					list = append(list, expr.NewStringLiteral(matched.Text(exprCursor)))
 				case boolLiteral:
 					list = append(list, expr.NewBoolLiteral(matched.Text(exprCursor)))

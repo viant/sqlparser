@@ -420,3 +420,15 @@ func TestParseSelect(t *testing.T) {
 		}
 	}
 }
+
+func TestParseSelect_BigQueryRawRegexLiteral(t *testing.T) {
+	sql := `SELECT LOWER(REGEXP_REPLACE(COALESCE(NULLIF(TRIM(s.NAME), ''), NULLIF(TRIM(s.MOBILE_URL), ''), ''),r'^(?:https?://)?(?:www\.)?', '')) AS site_domain FROM CI_SITE s`
+
+	parsed, err := ParseQuery(sql)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	actual := strings.TrimSpace(Stringify(parsed))
+	assert.Equal(t, sql, actual)
+}
