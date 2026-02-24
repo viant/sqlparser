@@ -3,6 +3,7 @@ package sqlparser
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -431,4 +432,28 @@ func TestParseSelect_BigQueryRawRegexLiteral(t *testing.T) {
 
 	actual := strings.TrimSpace(Stringify(parsed))
 	assert.Equal(t, sql, actual)
+}
+
+func TestParseSelect_SiteQualityWholeQuery(t *testing.T) {
+	data, err := os.ReadFile("testdata/site_quality.sql")
+	if !assert.NoError(t, err) {
+		return
+	}
+	sql := string(data)
+
+	parsed, err := ParseQuery(sql, WithErrorHandler(func(err error, cur *parsly.Cursor, _ interface{}) error {
+		remaining := strings.TrimSpace(string(cur.Input[cur.Pos:]))
+		if strings.HasPrefix(strings.ToUpper(remaining), "QUALIFY ") {
+			cur.Pos = len(cur.Input)
+			return nil
+		}
+		return err
+	}))
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	actual := strings.TrimSpace(Stringify(parsed))
+	assert.Contains(t, actual, "r'^(?:https?://)?(?:www\\.)?'")
+	assert.Contains(t, actual, "ORDER BY v.rn")
 }
