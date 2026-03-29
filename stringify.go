@@ -186,6 +186,26 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		stringify(actual.X, builder)
 	case *expr.Parenthesis:
 		builder.WriteString(actual.Raw)
+	case *expr.Switch:
+		if actual.Raw != "" {
+			builder.WriteString(actual.Raw)
+			break
+		}
+		builder.WriteString("CASE")
+		if actual.Ident.Name != "" {
+			builder.WriteString(" ")
+			builder.WriteString(actual.Ident.Name)
+		}
+		for _, candidate := range actual.Cases {
+			if candidate == nil {
+				continue
+			}
+			builder.WriteString(" WHEN ")
+			stringify(candidate.X.X, builder)
+			builder.WriteString(" THEN ")
+			stringify(candidate.Y, builder)
+		}
+		builder.WriteString(" END")
 	case *query.Item:
 		stringify(actual.Expr, builder)
 		if actual.Alias != "" {
