@@ -119,7 +119,8 @@ beginMatch:
 				rawNode := expr.NewRaw(match.Text(cursor))
 				dest.From.X = rawNode
 				rawExpr := trimEnclosure(rawNode.Raw)
-				rawParser := parsly.NewCursor(cursor.Path, []byte(rawExpr), pos)
+				rawExprForParse := stripTemplateBuiltins(rawExpr)
+				rawParser := parsly.NewCursor(cursor.Path, []byte(rawExprForParse), pos)
 				rawParser.OnError = cursor.OnError
 				subSelect := &query.Select{}
 				if err := parseQuery(rawParser, subSelect); err != nil {
@@ -164,6 +165,36 @@ beginMatch:
 		}
 	}
 	return nil
+}
+
+func stripTemplateBuiltins(query string) string {
+	for {
+		indexStart := strings.Index(query, "${predicate.")
+		if indexStart == -1 {
+			break
+		}
+		match := query[indexStart:]
+		indexEnd := strings.Index(match, "}")
+		if indexEnd == -1 {
+			break
+		}
+		match = match[:indexEnd+1]
+		query = strings.Replace(query, match, "  ", 1)
+	}
+	for _, marker := range []string{"$View.ParentJoinOn", "$View.ParentCompositeJoinOn"} {
+		for {
+			index := strings.Index(query, marker)
+			if index == -1 {
+				break
+			}
+			fragment := query[index:]
+			if endIndex := strings.Index(fragment, ")"); endIndex != -1 {
+				fragment = fragment[:endIndex+1]
+			}
+			query = strings.ReplaceAll(query, fragment, "")
+		}
+	}
+	return query
 }
 
 func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.TokenMatch) (bool, error) {
