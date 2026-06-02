@@ -7,22 +7,16 @@ import (
 )
 
 func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expectOn bool) error {
-	match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, exprMatcher, selectorMatcher)
-	switch match.Code {
-	case parenthesesCode:
-		join.With = expr.NewRaw(match.Text(cursor))
-	case selectorTokenCode:
-		identityOrAlias := match.Text(cursor)
-		match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
-		if match.Code == parenthesesCode {
-			identityOrAlias += match.Text(cursor)
-		}
-		join.With = expr.NewSelector(identityOrAlias)
+	if err := parseJoinTarget(cursor, join); err != nil {
+		return err
+	}
+	if join.With == nil {
+		return cursor.NewError(parenthesesMatcher, selectorMatcher)
 	}
 	if join.Alias == "" {
 		join.Alias = discoverAlias(cursor)
 	}
-	match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher, onKeywordMatcher)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher, onKeywordMatcher)
 	if match.Code == commentBlock {
 		join.Comments = match.Text(cursor)
 		match = cursor.MatchAfterOptional(whitespaceMatcher, onKeywordMatcher)
@@ -58,6 +52,33 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 	}
 
 	return err
+}
+
+func parseJoinTarget(cursor *parsly.Cursor, join *query.Join) error {
+	pos := cursor.Pos
+	operand, err := expectOperand(cursor)
+	if err != nil {
+		return err
+	}
+	if operand != nil {
+		join.With = operand
+		return nil
+	}
+	cursor.Pos = pos
+
+	match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, exprMatcher, selectorMatcher)
+	switch match.Code {
+	case parenthesesCode:
+		join.With = expr.NewRaw(match.Text(cursor))
+	case selectorTokenCode:
+		identityOrAlias := match.Text(cursor)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
+		if match.Code == parenthesesCode {
+			identityOrAlias += match.Text(cursor)
+		}
+		join.With = expr.NewSelector(identityOrAlias)
+	}
+	return nil
 }
 
 func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatch, error) {

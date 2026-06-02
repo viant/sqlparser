@@ -380,6 +380,25 @@ func TestParseSelect(t *testing.T) {
 				SQL:         `SELECT col1, col2 FROM table1 t, UNNEST(b) v`,
 				expect:      `SELECT col1, col2 FROM table1 t , UNNEST(b) v`,
 			},
+			{
+				description: "bigquery unnest relation",
+				SQL: `SELECT
+    si.event_date,
+    si.order_id,
+    si.audience_id,
+    fr.feature,
+    si.index_selectable,
+    si.selectable,
+    si.rejection,
+    fr.feature_ineligible_total,
+    fr.audience_ineligible_total,
+    fr.feature_ratio,
+    fr.estimated_rejection,
+    SAFE_DIVIDE(fr.estimated_rejection, NULLIF(si.rejection, 0)) AS rejection_share
+FROM ` + "`" + `viant-mediator.selector.soft_ineligiblities` + "`" + ` si,  UNNEST(si.feature_rejection_estimates) fr
+WHERE si.event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)`,
+				expect: "SELECT si.event_date, si.order_id, si.audience_id, fr.feature, si.index_selectable, si.selectable, si.rejection, fr.feature_ineligible_total, fr.audience_ineligible_total, fr.feature_ratio, fr.estimated_rejection, SAFE_DIVIDE(fr.estimated_rejection, NULLIF(si.rejection, 0)) AS rejection_share FROM `viant-mediator.selector.soft_ineligiblities` si , UNNEST(si.feature_rejection_estimates) fr WHERE si.event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)",
+			},
 
 			{
 				description: "",
@@ -432,6 +451,25 @@ func TestParseSelect_BigQueryRawRegexLiteral(t *testing.T) {
 
 	actual := strings.TrimSpace(Stringify(parsed))
 	assert.Equal(t, sql, actual)
+}
+
+func TestParseSelect_BigQueryUnnestJoinTarget(t *testing.T) {
+	sql := "SELECT si.event_date FROM `viant-mediator.selector.soft_ineligiblities` si, UNNEST(si.feature_rejection_estimates) fr"
+	parsed, err := ParseQuery(sql)
+	if !assert.NoError(t, err) {
+		return
+	}
+	if !assert.Len(t, parsed.Joins, 1) {
+		return
+	}
+	call, ok := parsed.Joins[0].With.(*expr.Call)
+	if !assert.Truef(t, ok, "expected UNNEST relation target to parse as *expr.Call, got %T", parsed.Joins[0].With) {
+		return
+	}
+	assert.Equal(t, "UNNEST", Stringify(call.X))
+	assert.Len(t, call.Args, 1)
+	assert.Equal(t, "si.feature_rejection_estimates", Stringify(call.Args[0]))
+	assert.Equal(t, "fr", parsed.Joins[0].Alias)
 }
 
 func TestParseSelect_SiteQualityWholeQuery(t *testing.T) {
