@@ -13,6 +13,11 @@ import (
 // ParseQuery parses query
 func ParseQuery(SQL string, opts ...Option) (*query.Select, error) {
 	options := newOptions(opts)
+	if options.structuralValidation {
+		if err := source.ValidateStructure(SQL); err != nil {
+			return nil, err
+		}
+	}
 	result := &query.Select{}
 	SQL = removeSQLComments(SQL)
 	cursor := parsly.NewCursor("", []byte(SQL), 0)

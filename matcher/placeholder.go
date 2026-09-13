@@ -19,7 +19,7 @@ func (n *placeholder) Match(cursor *parsly.Cursor) (matched int) {
 	}
 	size := len(input)
 
-	if isExpr && input[pos] == '{' {
+	if isExpr && pos < size && input[pos] == '{' {
 		pos++
 		matched++
 

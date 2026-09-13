@@ -53,6 +53,7 @@ func (s *CodeScanner) protected() (region, bool) {
 	result := region{start: i, end: len(text)}
 	if strings.HasPrefix(text[i:], "--") {
 		result.kind = "line comment"
+		result.closed = true
 		if end := strings.IndexByte(text[i:], '\n'); end >= 0 {
 			result.end = i + end
 		}
@@ -70,6 +71,7 @@ func (s *CodeScanner) protected() (region, bool) {
 				pos++
 				if depth == 0 {
 					result.end = pos + 1
+					result.closed = true
 					break
 				}
 			}
@@ -112,6 +114,7 @@ func (s *CodeScanner) protected() (region, bool) {
 			result.kind = "SQL quoted text"
 			if close := strings.Index(text[end+1:], delimiter); close >= 0 {
 				result.end = end + 1 + close + len(delimiter)
+				result.closed = true
 			}
 			return result, true
 		}

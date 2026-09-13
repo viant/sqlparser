@@ -3,7 +3,14 @@ package sqlparser
 import "github.com/viant/parsly"
 
 type Options struct {
-	onError func(err error, cur *parsly.Cursor, destNode interface{}) error
+	structuralValidation bool
+	onError              func(err error, cur *parsly.Cursor, destNode interface{}) error
+}
+
+// WithStructuralValidation rejects unbalanced parentheses and unclosed
+// quotes/comments before parsing. It does not promise full dialect validation.
+func WithStructuralValidation() Option {
+	return func(o *Options) { o.structuralValidation = true }
 }
 
 type Option func(o *Options)
