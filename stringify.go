@@ -16,14 +16,20 @@ import (
 	"github.com/viant/sqlparser/update"
 )
 
-// Stringify stringifies node
-func Stringify(n node.Node) string {
+// Stringify retains the established SQL rendering contract.
+func Stringify(n node.Node) string { return (Stringifier{}).String(n) }
+
+// Stringifier configures AST rendering without changing existing consumers.
+type Stringifier struct{ PreserveWindow bool }
+
+// String renders a node, optionally retaining authored LIMIT/OFFSET clauses.
+func (s Stringifier) String(n node.Node) string {
 	builder := new(bytes.Buffer)
-	stringify(n, builder)
+	s.append(n, builder)
 	return builder.String()
 }
 
-func stringify(n node.Node, builder *bytes.Buffer) {
+func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 	if n == nil {
 		panic("node was nill")
 	}
@@ -48,7 +54,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 					builder.WriteString(withSel.Raw)
 				case withSel.X != nil:
 					builder.WriteByte('(')
-					stringify(withSel.X, builder)
+					s.append(withSel.X, builder)
 					builder.WriteByte(')')
 				default:
 					builder.WriteString("()")
@@ -57,18 +63,18 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 			builder.WriteByte(' ')
 		}
 		builder.WriteString("SELECT ")
-		stringify(actual.List, builder)
+		s.append(actual.List, builder)
 		builder.WriteString(" FROM ")
-		stringify(&actual.From, builder)
+		s.append(&actual.From, builder)
 
 		if len(actual.Joins) > 0 {
 			for _, join := range actual.Joins {
-				stringify(join, builder)
+				s.append(join, builder)
 			}
 		}
 		if actual.Qualify != nil {
 			builder.WriteString(" WHERE ")
-			stringify(actual.Qualify.X, builder)
+			s.append(actual.Qualify.X, builder)
 		}
 		if len(actual.GroupBy) > 0 {
 			builder.WriteString(" GROUP BY ")
@@ -76,12 +82,12 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				if i != 0 {
 					builder.WriteString(", ")
 				}
-				stringify(item, builder)
+				s.append(item, builder)
 			}
 		}
 		if actual.Having != nil {
 			builder.WriteString(" HAVING ")
-			stringify(actual.Having, builder)
+			s.append(actual.Having, builder)
 		}
 
 		if len(actual.OrderBy) > 0 {
@@ -90,12 +96,20 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				if i > 0 {
 					builder.WriteString(", ")
 				}
-				stringify(item, builder)
+				s.append(item, builder)
 			}
+		}
+		if s.PreserveWindow && actual.Limit != nil {
+			builder.WriteString(" LIMIT ")
+			builder.WriteString(Stringify(actual.Limit))
+		}
+		if s.PreserveWindow && actual.Offset != nil {
+			builder.WriteString(" OFFSET ")
+			builder.WriteString(Stringify(actual.Offset))
 		}
 		if union := actual.Union; union != nil {
 			builder.WriteString(" " + union.Raw + " ")
-			stringify(union.X, builder)
+			s.append(union.X, builder)
 		}
 
 	case *query.Join:
@@ -103,7 +117,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(actual.Raw)
 		builder.WriteByte(' ')
 
-		stringify(actual.With, builder)
+		s.append(actual.With, builder)
 		if actual.Alias != "" {
 			builder.WriteByte(' ')
 			builder.WriteString(actual.Alias)
@@ -113,10 +127,10 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		}
 		if actual.On != nil {
 			builder.WriteString(" ON ")
-			stringify(actual.On, builder)
+			s.append(actual.On, builder)
 		}
 	case *expr.Qualify:
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 	case *expr.Literal:
 		builder.WriteString(actual.Value)
 	case query.List:
@@ -124,14 +138,14 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		if listSize == 0 {
 			return
 		}
-		stringify(actual[0], builder)
+		s.append(actual[0], builder)
 		for i := 1; i < listSize; i++ {
 			builder.WriteString(", ")
-			stringify(actual[i], builder)
+			s.append(actual[i], builder)
 		}
 
 	case *expr.Star:
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 		if len(actual.Except) > 0 {
 			builder.WriteString(" EXCEPT ")
 			if len(actual.Except) > 1 {
@@ -158,14 +172,14 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(" ")
 		builder.WriteString(actual.Unparsed)
 	case *expr.Collate:
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 		builder.WriteString(" COLLATE ")
 		builder.WriteString(actual.Collation)
 	case *query.From:
 		if actual.X == nil {
 			return
 		}
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 		if actual.Alias != "" {
 			builder.WriteString(" " + actual.Alias)
 		}
@@ -183,7 +197,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(actual.Name)
 	case *expr.Unary:
 		builder.WriteString(" " + actual.Op + " ")
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 	case *expr.Parenthesis:
 		builder.WriteString(actual.Raw)
 	case *expr.Switch:
@@ -201,13 +215,13 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				continue
 			}
 			builder.WriteString(" WHEN ")
-			stringify(candidate.X.X, builder)
+			s.append(candidate.X.X, builder)
 			builder.WriteString(" THEN ")
-			stringify(candidate.Y, builder)
+			s.append(candidate.Y, builder)
 		}
 		builder.WriteString(" END")
 	case *query.Item:
-		stringify(actual.Expr, builder)
+		s.append(actual.Expr, builder)
 		if actual.Alias != "" {
 			builder.WriteString(" AS " + actual.Alias)
 		}
@@ -218,13 +232,13 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 			builder.WriteString(" " + actual.Direction)
 		}
 	case *expr.Binary:
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 		builder.WriteString(" ")
 		if actual.Op != "" {
 			builder.WriteString(actual.Op + " ")
 		}
 		if actual.Y != nil {
-			stringify(actual.Y, builder)
+			s.append(actual.Y, builder)
 		}
 	case expr.Raw:
 		builder.WriteString(actual.Raw)
@@ -232,12 +246,12 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 	case *expr.Ident:
 		builder.WriteString(actual.Name)
 	case *expr.Call:
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 		builder.WriteString(actual.Raw)
 	case *expr.Range:
-		stringify(actual.Min, builder)
+		s.append(actual.Min, builder)
 		builder.WriteString(" AND ")
-		stringify(actual.Max, builder)
+		s.append(actual.Max, builder)
 	case *expr.Selector:
 		name := actual.Name
 		if actual.Expression == "" {
@@ -255,29 +269,29 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 		}
 		if actual.X != nil {
 			builder.WriteByte('.')
-			stringify(actual.X, builder)
+			s.append(actual.X, builder)
 		}
 	case *update.Item:
-		stringify(actual.Column, builder)
+		s.append(actual.Column, builder)
 		builder.WriteString(" = ")
-		stringify(actual.Expr, builder)
+		s.append(actual.Expr, builder)
 	case *update.Statement:
 		builder.WriteString("UPDATE ")
-		stringify(actual.Target.X, builder)
+		s.append(actual.Target.X, builder)
 		builder.WriteString(" SET ")
 		for i := range actual.Set {
 			if i > 0 {
 				builder.WriteString(", ")
 			}
-			stringify(actual.Set[i], builder)
+			s.append(actual.Set[i], builder)
 		}
 		if actual.Qualify != nil {
 			builder.WriteString(" WHERE ")
-			stringify(actual.Qualify, builder)
+			s.append(actual.Qualify, builder)
 		}
 	case *insert.Statement:
 		builder.WriteString("INSERT INTO ")
-		stringify(actual.Target.X, builder)
+		s.append(actual.Target.X, builder)
 		builder.WriteString(" (")
 		builder.WriteString(strings.Join(actual.Columns, ", "))
 		builder.WriteString(") VALUES(")
@@ -291,7 +305,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				if j > 0 {
 					builder.WriteString(", ")
 				}
-				stringify(actual.Values[i+j].Expr, builder)
+				s.append(actual.Values[i+j].Expr, builder)
 			}
 		}
 		builder.WriteString(")")
@@ -303,7 +317,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 					if i > 0 {
 						builder.WriteString(", ")
 					}
-					stringify(item, builder)
+					s.append(item, builder)
 				}
 			}
 		}
@@ -314,21 +328,21 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 				builder.WriteString(", ")
 			}
 
-			stringify(item, builder)
+			s.append(item, builder)
 		}
 
-		stringify(actual.Target, builder)
+		s.append(actual.Target, builder)
 		for _, join := range actual.Joins {
-			stringify(join, builder)
+			s.append(join, builder)
 		}
 
 		if actual.Qualify != nil {
 			builder.WriteString(" WHERE ")
-			stringify(actual.Qualify, builder)
+			s.append(actual.Qualify, builder)
 		}
 	case del.Target:
 		builder.WriteString(" FROM ")
-		stringify(actual.X, builder)
+		s.append(actual.X, builder)
 		if actual.Alias != "" {
 			builder.WriteString(" " + actual.Alias)
 		}
@@ -353,7 +367,7 @@ func stringify(n node.Node, builder *bytes.Buffer) {
 			if i > 0 {
 				builder.WriteString(",\n")
 			}
-			stringify(col, builder)
+			s.append(col, builder)
 		}
 		builder.WriteString(")")
 

@@ -59,7 +59,7 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) error {
 				placeholder := &expr.Placeholder{Name: match.Text(cursor)}
 				binary.Y = placeholder
 				prevPos := cursor.Pos
-				match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, logicalOperatorMatcher, groupByMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+				match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher, logicalOperatorMatcher)
 				switch match.Code {
 				case logicalOperator:
 					additionalExpr := &expr.Binary{X: binary.Y, Op: match.Text(cursor)}

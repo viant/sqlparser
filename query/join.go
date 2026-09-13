@@ -12,6 +12,9 @@ type Join struct {
 	With     node.Node
 	On       *expr.Qualify
 	Comments string
+	// Spans are half-open byte ranges in the parsed SQL input.
+	Span   node.Span
+	OnSpan node.Span
 }
 
 func NewJoin(raw string) *Join {

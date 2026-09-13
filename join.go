@@ -3,10 +3,17 @@ package sqlparser
 import (
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
+	"strings"
 )
 
 func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expectOn bool) error {
+	defer func() {
+		if join.Span.End == 0 {
+			join.Span.End = uint32(cursor.Pos)
+		}
+	}()
 	if err := parseJoinTarget(cursor, join); err != nil {
 		return err
 	}
@@ -23,17 +30,23 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 	}
 	switch match.Code {
 	case onKeyword:
+		begin := match.Offset
 		binary := &expr.Binary{}
 		join.On = &expr.Qualify{}
 		join.On.X = binary
 		if err := parseBinaryExpr(cursor, binary); err != nil {
 			return err
 		}
+		raw := string(cursor.Input[begin:cursor.Pos])
+		trimmed := strings.TrimSpace(raw)
+		start := begin + len(raw) - len(strings.TrimLeft(raw, " \t\r\n"))
+		join.OnSpan = node.Span{Begin: uint32(start), End: uint32(start + len(trimmed))}
 	default:
 		if expectOn {
 			return cursor.NewError(onKeywordMatcher)
 		}
 	}
+	join.Span.End = uint32(len(strings.TrimRight(string(cursor.Input[:cursor.Pos]), " \t\r\n")))
 	match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 	if match.Code == parsly.EOF {
 		return nil
@@ -124,6 +137,7 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 
 func appendJoin(cursor *parsly.Cursor, match *parsly.TokenMatch, dest *query.Select, expectOn bool) error {
 	join := query.NewJoin(match.Text(cursor))
+	join.Span.Begin = uint32(match.Offset)
 
 	dest.Joins = append(dest.Joins, join)
 	if err := parseJoin(cursor, join, dest, expectOn); err != nil {

@@ -145,9 +145,9 @@ var rangeOperatorMatcher = parsly.NewToken(rangeOperator, ".. AND .. ", matcher.
 
 var nullKeywordMatcher = parsly.NewToken(nullKeyword, "NULL", matcher.NewKeyword("null", &option.Case{}))
 var boolLiteralMatcher = parsly.NewToken(boolLiteral, "true|false", matcher.NewSet([]string{"true", "false"}, &option.Case{}))
-var singleQuotedStringLiteralMatcher = parsly.NewToken(singleQuotedStringLiteral, `'...'`, matcher.NewByteQuote('\'', '\\'))
+var singleQuotedStringLiteralMatcher = parsly.NewToken(singleQuotedStringLiteral, `'...'`, smatcher.NewStringMatcher('\''))
 var rawSingleQuotedStringLiteralMatcher = parsly.NewToken(rawSingleQuotedStringLiteral, `r'...'`, smatcher.NewPrefixedQuote([]byte{'r', 'R'}, '\'', '\\'))
-var doubleQuotedStringLiteralMatcher = parsly.NewToken(doubleQuotedStringLiteral, `"..."`, matcher.NewByteQuote('\'', '\\'))
+var doubleQuotedStringLiteralMatcher = parsly.NewToken(doubleQuotedStringLiteral, `"..."`, smatcher.NewStringMatcher('"'))
 var intLiteralMatcher = parsly.NewToken(intLiteral, `INT`, smatcher.NewIntMatcher())
 var numericLiteralMatcher = parsly.NewToken(numericLiteral, `NUMERIC`, matcher.NewNumber())
 

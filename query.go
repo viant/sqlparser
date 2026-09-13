@@ -1,13 +1,13 @@
 package sqlparser
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/query"
+	"github.com/viant/sqlparser/source"
 )
 
 // ParseQuery parses query
@@ -25,19 +25,7 @@ func ParseQuery(SQL string, opts ...Option) (*query.Select, error) {
 }
 
 func removeSQLComments(SQL string) string {
-	lines := strings.Split(SQL, "\n")
-	buffer := new(bytes.Buffer)
-	for i, line := range lines {
-		if i > 0 {
-			buffer.WriteString("\n")
-		}
-		i++
-		if index := strings.Index(line, "--"); index != -1 {
-			line = line[:index]
-		}
-		buffer.WriteString(line)
-	}
-	return buffer.String()
+	return source.MaskLineComments(SQL)
 }
 
 func parseQuery(cursor *parsly.Cursor, dest *query.Select) error {
@@ -154,6 +142,10 @@ beginMatch:
 					if match.Code == parsly.EOF {
 						return nil
 					}
+					hasMatch, err = matchPostFrom(cursor, dest, match)
+					if !hasMatch && err == nil {
+						err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					}
 
 				} else {
 					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
@@ -249,7 +241,9 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 		return err == nil, err
 	case windowTokenCode:
 		matchedText := match.Text(cursor)
-		dest.Window = expr.NewRaw(matchedText)
+		if dest.Window == nil {
+			dest.Window = expr.NewRaw(matchedText)
+		}
 		match = cursor.MatchAfterOptional(whitespaceMatcher, intLiteralMatcher)
 		if match.Code == intLiteral {
 			literal := expr.NewNumericLiteral(match.Text(cursor))
@@ -259,6 +253,8 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 			case "offset":
 				dest.Offset = literal
 			}
+			match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
+			return matchPostFrom(cursor, dest, match)
 		}
 	case parsly.EOF:
 		return true, nil
