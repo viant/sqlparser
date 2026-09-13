@@ -64,8 +64,10 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 		}
 		builder.WriteString("SELECT ")
 		s.append(actual.List, builder)
-		builder.WriteString(" FROM ")
-		s.append(&actual.From, builder)
+		if actual.From.X != nil {
+			builder.WriteString(" FROM ")
+			s.append(&actual.From, builder)
+		}
 
 		if len(actual.Joins) > 0 {
 			for _, join := range actual.Joins {
