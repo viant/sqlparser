@@ -13,6 +13,13 @@ type region struct {
 type CodeScanner struct {
 	source   string
 	position int
+	context  codeContext
+}
+
+type codeContext struct {
+	position     int
+	previousEnd  int
+	previousKind string
 }
 
 func NewCodeScanner(source string, start int) *CodeScanner {
@@ -42,6 +49,33 @@ func (s *CodeScanner) Next() (int, bool) {
 		return position, true
 	}
 	return 0, false
+}
+
+// PreviousSignificant returns the last non-whitespace, non-comment byte before
+// the byte just returned by a successful Next. Call it before advancing again.
+// Quoted text is significant and has a nonempty kind; -1 means no preceding text.
+// A lazy cursor reuses the protected-region lexer and advances through preceding
+// SQL once across lookups, for O(n) total time and O(1) space.
+func (s *CodeScanner) PreviousSignificant() (position int, kind string) {
+	context := &s.context
+	scanner := CodeScanner{source: s.source, position: context.position}
+	for scanner.position < s.position-1 {
+		if protected, ok := scanner.protected(); ok {
+			if protected.kind == "SQL quoted text" {
+				context.previousEnd = protected.end
+				context.previousKind = protected.kind
+			}
+			scanner.position = protected.end
+		} else {
+			if !IsWhitespace(s.source[scanner.position]) {
+				context.previousEnd = scanner.position + 1
+				context.previousKind = ""
+			}
+			scanner.position++
+		}
+	}
+	context.position = scanner.position
+	return context.previousEnd - 1, context.previousKind
 }
 
 func (s *CodeScanner) protected() (region, bool) {
