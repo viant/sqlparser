@@ -13,16 +13,50 @@ import (
 // SQL doubled-quote rules (including backticks/brackets used by SQL dialects).
 // TableName/TableSelector retain their existing AST/string behavior.
 func TableIdentifierParts(source string) ([]string, error) {
+	return (TableIdentifierParser{}).Parts(source)
+}
+
+// TableIdentifierParser configures logical table-name parsing. The zero value
+// preserves ordinary delimited identifiers. Product "BigQuery" recognizes
+// whole-path backticks and legacy brackets/colon separators. Parts never emits SQL.
+type TableIdentifierParser struct {
+	Product string
+}
+
+func (p TableIdentifierParser) Parts(source string) ([]string, error) {
 	if !utf8.ValidString(source) {
 		return nil, fmt.Errorf("invalid UTF-8 in table identifier")
 	}
-	parser := tableIdentifierParser{source: source}
-	return parser.parse()
+	parser := tableIdentifierParser{source: source, bigQuery: strings.EqualFold(p.Product, "BigQuery")}
+	parts, err := parser.parse()
+	if err != nil || !parser.bigQuery {
+		return parts, err
+	}
+	text := strings.TrimSpace(source)
+	// BigQuery delimits a complete table path. Other products continue to
+	// treat a delimited dot as part of one identifier, including SQL Server.
+	if len(parts) == 1 && (text[0] == '`' || text[0] == '[') {
+		path := parts[0]
+		if text[0] == '[' {
+			path = strings.Replace(path, ":", ".", 1)
+		}
+		parts = strings.Split(path, ".")
+	}
+	if len(parts) > 3 {
+		return nil, fmt.Errorf("BigQuery table identifier has more than three parts")
+	}
+	for _, part := range parts {
+		if strings.TrimSpace(part) == "" || strings.ContainsAny(part, ":`[]") {
+			return nil, fmt.Errorf("invalid BigQuery table identifier part")
+		}
+	}
+	return parts, nil
 }
 
 type tableIdentifierParser struct {
 	source   string
 	position int
+	bigQuery bool
 }
 
 func (p *tableIdentifierParser) spaces() {
@@ -53,7 +87,7 @@ func (p *tableIdentifierParser) parse() ([]string, error) {
 		if p.position == len(p.source) {
 			return parts, nil
 		}
-		if p.source[p.position] != '.' {
+		if p.source[p.position] != '.' && !(p.bigQuery && len(parts) == 1 && p.source[p.position] == ':') {
 			return nil, fmt.Errorf("unexpected table identifier suffix at %d", p.position)
 		}
 		p.position++
@@ -92,7 +126,7 @@ func (p *tableIdentifierParser) part() (string, error) {
 		if r == utf8.RuneError && size == 1 {
 			return "", fmt.Errorf("invalid UTF-8 in table identifier")
 		}
-		allowed := unicode.IsLetter(r) || r == '_' || p.position > start && (unicode.IsDigit(r) || r == '$')
+		allowed := unicode.IsLetter(r) || r == '_' || p.position > start && (unicode.IsDigit(r) || r == '$' || p.bigQuery && r == '-')
 		if !allowed {
 			break
 		}
