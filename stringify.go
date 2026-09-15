@@ -216,12 +216,29 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 			if candidate == nil {
 				continue
 			}
+			if candidate.Y == nil {
+				builder.WriteByte(' ')
+				s.append(candidate.X.X, builder)
+				continue
+			}
+			if candidate.X.X == nil {
+				builder.WriteString(" ELSE ")
+				s.append(candidate.Y, builder)
+				continue
+			}
 			builder.WriteString(" WHEN ")
 			s.append(candidate.X.X, builder)
 			builder.WriteString(" THEN ")
 			s.append(candidate.Y, builder)
 		}
 		builder.WriteString(" END")
+	case []node.Node:
+		for i, item := range actual {
+			if i > 0 {
+				builder.WriteString(", ")
+			}
+			s.append(item, builder)
+		}
 	case *query.Item:
 		s.append(actual.Expr, builder)
 		if actual.Alias != "" {

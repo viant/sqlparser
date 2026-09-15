@@ -113,6 +113,9 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 		}
 		return actual, nil
 	case *expr.Parenthesis:
+		if !hasCollate(actual.X) {
+			return actual, nil
+		}
 		stripped, err := stripCollateNode(actual.X)
 		if err != nil {
 			return nil, err
@@ -130,6 +133,9 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 		actual.X = stripped
 		return actual, nil
 	case *expr.Call:
+		if !hasCollate(actual) {
+			return actual, nil
+		}
 		stripped, err := stripCollateNode(actual.X)
 		if err != nil {
 			return nil, err
@@ -184,7 +190,13 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 		actual.Max = stripped
 		return actual, nil
 	case *expr.Switch:
+		if !hasCollate(actual) {
+			return actual, nil
+		}
 		for _, c := range actual.Cases {
+			if c == nil {
+				continue
+			}
 			stripped, err := stripCollateNode(c.X.X)
 			if err != nil {
 				return nil, err
@@ -195,6 +207,17 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 				return nil, err
 			}
 			c.Y = stripped
+		}
+		actual.Raw = ""
+		actual.Raw = Stringify(actual)
+		return actual, nil
+	case []node.Node:
+		for i := range actual {
+			stripped, err := stripCollateNode(actual[i])
+			if err != nil {
+				return nil, err
+			}
+			actual[i] = stripped
 		}
 		return actual, nil
 	case *expr.Raw:
@@ -308,7 +331,13 @@ func hasCollate(n node.Node) bool {
 		return hasCollate(actual.Min) || hasCollate(actual.Max)
 	case *expr.Switch:
 		for _, c := range actual.Cases {
-			if hasCollate(c.X.X) || hasCollate(c.Y) {
+			if c != nil && (hasCollate(c.X.X) || hasCollate(c.Y)) {
+				return true
+			}
+		}
+	case []node.Node:
+		for _, item := range actual {
+			if hasCollate(item) {
 				return true
 			}
 		}

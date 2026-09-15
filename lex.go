@@ -78,6 +78,13 @@ const (
 	ttlKeyword
 	truncateTableKeyword
 	collateKeyword
+	whenKeyword
+	thenKeyword
+	elseKeyword
+	endKeyword
+	intervalKeyword
+	intervalUnit
+	limitKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -93,7 +100,14 @@ var selectionKindMatcher = parsly.NewToken(selectionKindCode, "ALL|DISTINCT|STRU
 var orderDirectionMatcher = parsly.NewToken(orderDirection, "ASC|DESC", matcher.NewSet([]string{
 	"ASC", "DESC",
 }, &option.Case{}))
-var caseBlockMatcher = parsly.NewToken(caseBlock, "CASE", matcher.NewSeqBlock("CASE", "END"))
+var caseBlockMatcher = parsly.NewToken(caseBlock, "CASE", matcher.NewKeyword("case", &option.Case{}))
+var whenKeywordMatcher = parsly.NewToken(whenKeyword, "WHEN", matcher.NewKeyword("when", &option.Case{}))
+var thenKeywordMatcher = parsly.NewToken(thenKeyword, "THEN", matcher.NewKeyword("then", &option.Case{}))
+var elseKeywordMatcher = parsly.NewToken(elseKeyword, "ELSE", matcher.NewKeyword("else", &option.Case{}))
+var endKeywordMatcher = parsly.NewToken(endKeyword, "END", matcher.NewKeyword("end", &option.Case{}))
+var intervalKeywordMatcher = parsly.NewToken(intervalKeyword, "INTERVAL", matcher.NewKeyword("interval", &option.Case{}))
+var intervalUnitMatcher = parsly.NewToken(intervalUnit, "interval unit", matcher.NewSet([]string{"microsecond", "millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year", "year_month", "day_hour", "day_minute", "day_second", "hour_minute", "hour_second", "minute_second", "day_microsecond", "hour_microsecond", "minute_microsecond", "second_microsecond"}, &option.Case{}))
+var limitKeywordMatcher = parsly.NewToken(limitKeyword, "LIMIT", matcher.NewKeyword("limit", &option.Case{}))
 var commentBlockMatcher = parsly.NewToken(commentBlock, "/* */", matcher.NewSeqBlock("/*", "*/"))
 var inlineCommentMatcher = parsly.NewToken(commentBlock, "--", matcher.NewSeqBlock("--", "\n"))
 

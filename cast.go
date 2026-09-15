@@ -4,9 +4,32 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/source"
 )
+
+// AS introduces a dialect/host type, not a second comma-separated argument.
+// Keep its spelling opaque while exposing the executable operand to visitors.
+func parseCastArguments(parent *parsly.Cursor, raw string, pos, index int) ([]node.Node, error) {
+	inside := raw[1 : len(raw)-1]
+	cursor := parsly.NewCursor(parent.Path, []byte(inside[:index]), pos+1)
+	cursor.OnError = parent.OnError
+	operand, err := expectExpression(cursor)
+	if err != nil {
+		return nil, err
+	}
+	skipExpressionSpace(cursor)
+	if cursor.Pos != len(cursor.Input) {
+		return nil, cursor.NewError(asKeywordMatcher)
+	}
+	typeSource := strings.TrimSpace(inside[index+2:])
+	if typeSource == "" || len(source.SplitArgs(typeSource)) != 1 {
+		return nil, fmt.Errorf("CAST requires a type after AS")
+	}
+	return []node.Node{&expr.Binary{X: operand, Op: inside[index : index+2], Y: &expr.Raw{Raw: typeSource}}}, nil
+}
 
 // Cast describes a CAST operand and its authored type without interpreting the
 // type as either a SQL dialect type or a host-language type.

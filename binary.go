@@ -19,12 +19,13 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
 		}
 	}
 	//fmt.Printf("After op %v,: %s\n", binary.Op, cursor.Input[cursor.Pos:])
+	skipExpressionSpace(cursor)
 	pos := cursor.Pos
 	if binary.Op == "" {
 		match := cursor.MatchAfterOptional(whitespaceMatcher, betweenKeywordMatcher, binaryOperatorMatcher, logicalOperatorMatcher, placeholderMatcher)
 		switch match.Code {
 		case logicalOperator:
-			if !matcher.IsWhiteSpace(cursor.Input[cursor.Pos]) {
+			if cursor.Pos < len(cursor.Input) && !matcher.IsWhiteSpace(cursor.Input[cursor.Pos]) {
 				cursor.Pos = pos
 				return nil
 			}

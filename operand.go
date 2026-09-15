@@ -5,6 +5,7 @@ import (
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
+	"github.com/viant/sqlparser/source"
 	"strings"
 )
 
@@ -33,6 +34,8 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 	}
 
 	match := cursor.MatchAfterOptional(whitespaceMatcher,
+		whenKeywordMatcher, thenKeywordMatcher, elseKeywordMatcher, endKeywordMatcher,
+		intervalKeywordMatcher,
 		orderByKeywordMatcher,
 		asKeywordMatcher,
 		exceptKeywordMatcher,
@@ -63,7 +66,7 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		switch match.Code {
 		case parenthesesCode:
 			raw := match.Text(cursor)
-			args, err := parseCallArguments(cursor, raw, pos)
+			args, err := parseCallArguments(cursor, selRaw, raw, pos)
 			if err != nil {
 				return nil, err
 			}
@@ -86,7 +89,25 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 	case nullTokenCode:
 		return applyCollate(cursor, expr.NewNullLiteral(match.Text(cursor)))
 	case caseBlock:
-		return applyCollate(cursor, &expr.Switch{Raw: match.Text(cursor)})
+		result, err := parseCase(cursor, cursor.Pos-match.Size)
+		if err != nil {
+			return nil, err
+		}
+		return applyCollate(cursor, result)
+	case intervalKeyword:
+		op := match.Text(cursor)
+		value, err := expectOperand(cursor)
+		if err != nil || value == nil {
+			return nil, cursor.NewError(exprMatcher)
+		}
+		interval := &expr.Unary{Op: op, X: value}
+		skipExpressionSpace(cursor)
+		if unit := cursor.MatchOne(intervalUnitMatcher); unit.Code == intervalUnit {
+			interval.X = &expr.Binary{X: value, Y: &expr.Ident{Name: unit.Text(cursor)}}
+		} else if literal, ok := value.(*expr.Literal); !ok || literal.Kind != "string" {
+			return nil, cursor.NewError(intervalUnitMatcher)
+		}
+		return applyCollate(cursor, interval)
 	case starTokenCode:
 		selRaw := match.Text(cursor)
 		selector := expr.NewSelector(selRaw)
@@ -107,41 +128,36 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		rawExpr := raw[1 : len(raw)-1]
 		exprCursor := parsly.NewCursor(cursor.Path, []byte(rawExpr), cursor.Pos-len(raw))
 		exprCursor.OnError = cursor.OnError
-		binary := &expr.Binary{}
-		_ = parseBinaryExpr(exprCursor, binary)
-		if binary.Y != nil {
-			result.X = binary
-		} else if binary.X != nil && strings.TrimSpace(string(exprCursor.Input[exprCursor.Pos:])) == "" {
-			result.X = binary.X
+		skipExpressionSpace(exprCursor)
+		start := exprCursor.Pos
+		if match := exprCursor.MatchAny(selectKeywordMatcher, withKeywordMatcher); match.Code == selectKeyword || match.Code == withKeyword {
+			exprCursor.Pos = start
+			selectNode := &query.Select{}
+			if err := parseQuery(exprCursor, selectNode); err != nil {
+				return nil, err
+			}
+			skipExpressionSpace(exprCursor)
+			if exprCursor.Pos != len(exprCursor.Input) {
+				return nil, exprCursor.NewError(exprMatcher)
+			}
+			result.X = selectNode
+			return applyCollate(cursor, result)
+		}
+		var list query.List
+		if err := parseCallArgs(exprCursor, &list); err != nil {
+			return nil, err
+		}
+		if len(list) == 0 {
+			return nil, exprCursor.NewError(exprMatcher)
+		}
+		if len(list) == 1 {
+			result.X = list[0].Expr
 		} else {
-			exprCursor := parsly.NewCursor(cursor.Path, []byte(rawExpr), cursor.Pos-len(raw))
-
-			var list []node.Node
-			tokens := append([]*parsly.Token{placeholderMatcher}, literalTokens...)
-			for i := 0; i < len(rawExpr); i++ {
-				matched := exprCursor.MatchAfterOptional(whitespaceMatcher, tokens...)
-				switch matched.Code {
-				case nextCode:
-				case placeholderTokenCode:
-					list = append(list, &expr.Placeholder{Name: matched.Text(exprCursor)})
-				case nullKeyword:
-					list = append(list, expr.NewNullLiteral(matched.Text(exprCursor)))
-				case singleQuotedStringLiteral, rawSingleQuotedStringLiteral, doubleQuotedStringLiteral:
-					list = append(list, expr.NewStringLiteral(matched.Text(exprCursor)))
-				case boolLiteral:
-					list = append(list, expr.NewBoolLiteral(matched.Text(exprCursor)))
-				case intLiteral:
-					list = append(list, expr.NewIntLiteral(matched.Text(exprCursor)))
-				case numericLiteral:
-					list = append(list, expr.NewNumericLiteral(matched.Text(exprCursor)))
-				default:
-					break
-				}
+			items := make([]node.Node, len(list))
+			for i := range list {
+				items[i] = list[i].Expr
 			}
-			if len(list) > 0 {
-				result.X = list
-			}
-
+			result.X = items
 		}
 		return applyCollate(cursor, result)
 	case notOperator:
@@ -152,8 +168,8 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		return applyCollate(cursor, unary)
 	case commentBlock:
 		return expectOperand(cursor)
-	case asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
-		cursor.Pos = pos
+	case whenKeyword, thenKeyword, elseKeyword, endKeyword, asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
+		cursor.Pos = pos - match.Size
 	}
 	return nil, nil
 }
@@ -175,9 +191,14 @@ func applyCollate(cursor *parsly.Cursor, n node.Node) (node.Node, error) {
 	return &expr.Collate{X: n, Collation: match.Text(cursor)}, nil
 }
 
-func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node, error) {
+func parseCallArguments(cursor *parsly.Cursor, name, raw string, pos int) ([]node.Node, error) {
 	var args []node.Node
 	if len(raw) > 0 {
+		if strings.EqualFold(name, "cast") {
+			if index := source.FindTopLevelKeyword(raw[1:len(raw)-1], "AS", 0); index >= 0 {
+				return parseCastArguments(cursor, raw, pos, index)
+			}
+		}
 		argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
 		argCursor.OnError = cursor.OnError
 		list := query.List{}
@@ -193,6 +214,9 @@ func parseCallArguments(cursor *parsly.Cursor, raw string, pos int) ([]node.Node
 
 // ParseCallExpr parses call expression
 func ParseCallExpr(rawExpr string) (*expr.Call, error) {
+	if err := source.ValidateStructure(rawExpr); err != nil {
+		return nil, err
+	}
 	cursor := parsly.NewCursor("", []byte(rawExpr), 0)
 	match := cursor.MatchAfterOptional(whitespaceMatcher, selectorMatcher)
 	if match.Code != selectorTokenCode {
@@ -205,9 +229,13 @@ func ParseCallExpr(rawExpr string) (*expr.Call, error) {
 		return nil, cursor.NewError(parenthesesMatcher)
 	}
 	raw := match.Text(cursor)
-	args, err := parseCallArguments(cursor, raw, pos)
+	args, err := parseCallArguments(cursor, Stringify(selector), raw, pos)
 	if err != nil {
 		return nil, err
+	}
+	skipExpressionSpace(cursor)
+	if cursor.Pos != len(cursor.Input) {
+		return nil, cursor.NewError(exprMatcher)
 	}
 	return &expr.Call{X: selector, Raw: rawExpr, Args: args}, nil
 }
