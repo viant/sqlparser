@@ -122,7 +122,10 @@ beginMatch:
 				rawNode.X = subSelect
 			}
 			if dest.From.Alias == "" {
-				dest.From.Alias = discoverAlias(cursor)
+				var err error
+				if dest.From.Alias, err = discoverAlias(cursor); err != nil {
+					return err
+				}
 			}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher)
 			if match.Code == commentBlock {

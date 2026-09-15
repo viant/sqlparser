@@ -21,7 +21,10 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 		return cursor.NewError(parenthesesMatcher, selectorMatcher)
 	}
 	if join.Alias == "" {
-		join.Alias = discoverAlias(cursor)
+		var err error
+		if join.Alias, err = discoverAlias(cursor); err != nil {
+			return err
+		}
 	}
 	match := cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher, onKeywordMatcher)
 	if match.Code == commentBlock {
@@ -103,7 +106,10 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 		join.With = expr.NewSelector(match.Text(cursor))
 	}
 
-	join.Alias = discoverAlias(cursor)
+	var err error
+	if join.Alias, err = discoverAlias(cursor); err != nil {
+		return match, err
+	}
 
 	match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher, onKeywordMatcher)
 	if match.Code == commentBlock {
