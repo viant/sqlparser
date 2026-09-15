@@ -15,16 +15,15 @@ func (aliasIdentifier) Match(cursor *parsly.Cursor) int {
 	if cursor.Pos >= len(cursor.Input) {
 		return 0
 	}
-	switch cursor.Input[cursor.Pos] {
-	case '"', '`', '[':
-		parser := tableIdentifierParser{source: string(cursor.Input), position: cursor.Pos}
-		if _, err := parser.part(); err != nil {
-			return 0
-		}
-		return parser.position - cursor.Pos
-	default:
-		return matcher.NewIdentifier().Match(cursor)
+	// Single quotes remain string literals in alias syntax.
+	if cursor.Input[cursor.Pos] == '\'' {
+		return 0
 	}
+	parser := tableIdentifierParser{source: string(cursor.Input), position: cursor.Pos}
+	if _, err := parser.part(); err != nil {
+		return 0
+	}
+	return parser.position - cursor.Pos
 }
 
 // discoverAlias owns optional alias syntax. Once AS or an identifier start is
@@ -39,8 +38,9 @@ func discoverAlias(cursor *parsly.Cursor) (string, error) {
 		// Clause matchers can match a keyword prefix (for example FROM in
 		// from_records). Only a whole token can terminate alias discovery.
 		if match.Size > 0 && match.Code != identifierCode && cursor.Pos < len(cursor.Input) {
-			ch := cursor.Input[cursor.Pos]
-			if matcher.IsLetter(ch) || ch >= '0' && ch <= '9' || ch == '_' {
+			start := *cursor
+			start.Pos = match.Offset
+			if identifier.Match(&start) > match.Size {
 				cursor.Pos = match.Offset
 				match = cursor.MatchOne(aliasIdentifierMatcher)
 			}
