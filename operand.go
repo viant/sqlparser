@@ -109,9 +109,10 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		exprCursor.OnError = cursor.OnError
 		binary := &expr.Binary{}
 		_ = parseBinaryExpr(exprCursor, binary)
-		result.X = result.X
 		if binary.Y != nil {
 			result.X = binary
+		} else if binary.X != nil && strings.TrimSpace(string(exprCursor.Input[exprCursor.Pos:])) == "" {
+			result.X = binary.X
 		} else {
 			exprCursor := parsly.NewCursor(cursor.Path, []byte(rawExpr), cursor.Pos-len(raw))
 

@@ -6,8 +6,12 @@ import (
 	"github.com/viant/sqlparser/expr"
 )
 
-func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) error {
-	var err error
+func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
+	defer func() {
+		if err == nil && binary != nil && binary.Op != "" {
+			*binary = *binary.Normalize()
+		}
+	}()
 	if binary.X == nil {
 		binary.X, err = expectOperand(cursor)
 		if err != nil || binary.X == nil {

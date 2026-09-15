@@ -1,6 +1,8 @@
 package expr
 
 import (
+	"strings"
+
 	"github.com/viant/sqlparser/node"
 )
 
@@ -11,19 +13,55 @@ type Binary struct {
 }
 
 func (b *Binary) Normalize() *Binary {
+	if b == nil {
+		return nil
+	}
 	normalized := *b
-	switch b.Op[0] {
-	case 'A', 'O', 'a', 'o':
-	default:
-
-		if bin, ok := b.Y.(*Binary); ok && Identity(b.X) != nil {
-			xBin := &Binary{X: b.X, Y: bin.X, Op: b.Op}
-			normalized.X = xBin
-			normalized.Op = bin.Op
-			normalized.Y = bin.Y
-		}
+	if left, ok := normalized.X.(*Binary); ok {
+		normalized.X = left.Normalize()
+	}
+	right, ok := normalized.Y.(*Binary)
+	if !ok {
+		return &normalized
+	}
+	normalized.Y = right.Normalize()
+	right = normalized.Y.(*Binary)
+	leftPrecedence, rightPrecedence := binaryPrecedence(normalized.Op), binaryPrecedence(right.Op)
+	if rightPrecedence > 0 && (leftPrecedence > rightPrecedence || leftAssociativeArithmetic(normalized.Op, right.Op)) {
+		xBin := (&Binary{X: normalized.X, Y: right.X, Op: normalized.Op}).Normalize()
+		return (&Binary{X: xBin, Y: right.Y, Op: right.Op}).Normalize()
 	}
 	return &normalized
+}
+
+func binaryPrecedence(op string) int {
+	switch strings.ToUpper(strings.TrimSpace(op)) {
+	case "OR":
+		return 1
+	case "AND":
+		return 2
+	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "BETWEEN":
+		return 3
+	case "+", "-":
+		return 4
+	case "*", "/":
+		return 5
+	default:
+		return 0
+	}
+}
+
+func leftAssociativeArithmetic(left, right string) bool {
+	leftPrecedence, rightPrecedence := binaryPrecedence(left), binaryPrecedence(right)
+	if leftPrecedence == 0 || leftPrecedence != rightPrecedence {
+		return false
+	}
+	switch leftPrecedence {
+	case 4, 5:
+		return true
+	default:
+		return false
+	}
 }
 
 func (b *Binary) Walk(fn func(ident node.Node, values *Values, operator, parentOperator string) error) error {
