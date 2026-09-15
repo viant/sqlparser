@@ -84,7 +84,7 @@ beginMatch:
 		goto beginMatch
 	case selectKeyword:
 		match = cursor.MatchAfterOptional(whitespaceMatcher, selectionKindMatcher)
-		if match.Code == selectionKind {
+		if match.Code == selectionKindCode {
 			dest.Kind = match.Text(cursor)
 		}
 		dest.List = make(query.List, 0)

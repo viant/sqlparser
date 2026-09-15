@@ -94,9 +94,10 @@ var asKeywordMatcher = parsly.NewToken(asKeyword, "AS", matcher.NewKeyword("as",
 var starTokenMatcher = parsly.NewToken(starTokenCode, "*", matcher.NewByte('*'))
 var notOperatorMatcher = parsly.NewToken(notOperator, "NOT", matcher.NewKeyword("not", &option.Case{}))
 var nullMatcher = parsly.NewToken(nullTokenCode, "NULL", matcher.NewKeyword("null", &option.Case{}))
-var selectionKindMatcher = parsly.NewToken(selectionKindCode, "ALL|DISTINCT|STRUCT", matcher.NewSet([]string{
-	"ALL", "DISTINCT", "STRUCT",
-}, &option.Case{}))
+var selectionKindMatcher = parsly.NewToken(selectionKindCode, "ALL|DISTINCT|STRUCT", selectionModifier{
+	keywords: matcher.NewSet([]string{"ALL", "DISTINCT", "STRUCT"}, &option.Case{}),
+	selector: smatcher.NewSelector(false),
+})
 var orderDirectionMatcher = parsly.NewToken(orderDirection, "ASC|DESC", matcher.NewSet([]string{
 	"ASC", "DESC",
 }, &option.Case{}))
@@ -166,6 +167,8 @@ var intLiteralMatcher = parsly.NewToken(intLiteral, `INT`, smatcher.NewIntMatche
 var numericLiteralMatcher = parsly.NewToken(numericLiteral, `NUMERIC`, matcher.NewNumber())
 
 var dotMatcher = parsly.NewToken(dotCode, ".", matcher.NewByte('.'))
+
+var aliasIdentifierMatcher = parsly.NewToken(identifierCode, "ALIAS", aliasIdentifier{})
 
 var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIdentifier())
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector(false))

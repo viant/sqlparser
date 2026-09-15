@@ -63,6 +63,10 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 			builder.WriteByte(' ')
 		}
 		builder.WriteString("SELECT ")
+		if kind := strings.TrimSpace(actual.Kind); kind != "" {
+			builder.WriteString(kind)
+			builder.WriteByte(' ')
+		}
 		s.append(actual.List, builder)
 		if actual.From.X != nil {
 			builder.WriteString(" FROM ")
