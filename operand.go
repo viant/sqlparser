@@ -156,6 +156,18 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 	case whenKeyword, thenKeyword, elseKeyword, endKeyword, asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
 		cursor.Pos = pos - match.Size
 	}
+	if match.Code == parsly.Invalid && cursor.OnError != nil {
+		start := cursor.Pos
+		var operand node.Node
+		parseErr := cursor.NewError(exprMatcher)
+		if err := cursor.OnError(parseErr, cursor, &operand); err != nil {
+			return nil, err
+		}
+		if operand == nil || cursor.Pos <= start || cursor.Pos > len(cursor.Input) {
+			return nil, parseErr
+		}
+		return applyCollate(cursor, operand)
+	}
 	return nil, nil
 }
 

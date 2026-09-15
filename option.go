@@ -27,6 +27,10 @@ func newOptions(options []Option) *Options {
 	return ret
 }
 
+// WithErrorHandler extends syntax at parser-owned recovery points. For an
+// unknown operand, destNode is *node.Node: a successful handler must assign a
+// node and advance the cursor through exactly that operand. Nested argument
+// and subquery cursors inherit the handler; unhandled errors must be returned.
 func WithErrorHandler(fn func(err error, cur *parsly.Cursor, destNode interface{}) error) Option {
 	return func(o *Options) {
 		o.onError = fn
