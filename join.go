@@ -72,6 +72,11 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 
 func parseJoinTarget(cursor *parsly.Cursor, join *query.Join) error {
 	pos := cursor.Pos
+	if match := cursor.MatchAfterOptional(whitespaceMatcher, bracedTableMatcher); match.Code == tableTokenCode {
+		join.With = expr.NewSelector(match.Text(cursor))
+		return nil
+	}
+	cursor.Pos = pos
 	operand, err := expectOperand(cursor)
 	if err != nil {
 		return err

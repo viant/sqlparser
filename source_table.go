@@ -43,9 +43,10 @@ func SourceTable(value node.Node) (table string, parenthesized bool, err error) 
 	}
 	for {
 		cursor := parsly.NewCursor("table source", []byte(raw), 0)
+		// Qualified braced table roots are distinct from standalone placeholders.
 		// Placeholder recognition must precede the permissive table matcher:
 		// that matcher also accepts template selectors such as $View.X.SQL.
-		match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, placeholderMatcher, tableMatcher, doubleQuotedStringLiteralMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, bracedTableMatcher, placeholderMatcher, tableMatcher, doubleQuotedStringLiteralMatcher)
 		if match.Code != parenthesesCode && match.Code != tableTokenCode && match.Code != doubleQuotedStringLiteral {
 			return "", false, nil
 		}

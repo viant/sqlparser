@@ -173,6 +173,7 @@ var aliasIdentifierMatcher = parsly.NewToken(identifierCode, "ALIAS", aliasIdent
 var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIdentifier())
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector(false))
 var tableMatcher = parsly.NewToken(tableTokenCode, "TABLE MATCHER", smatcher.NewSelector(true))
+var bracedTableMatcher = parsly.NewToken(tableTokenCode, "BRACED TABLE", smatcher.NewBracedTableSelector())
 
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())
 var literalMatcher = parsly.NewToken(literalCode, "LITERAL", matcher.NewNop())
