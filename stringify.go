@@ -271,6 +271,11 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 	case *expr.Call:
 		s.append(actual.X, builder)
 		builder.WriteString(actual.Raw)
+	case *expr.Subscript:
+		s.append(actual.X, builder)
+		builder.WriteByte('[')
+		s.append(actual.Index, builder)
+		builder.WriteByte(']')
 	case *expr.Range:
 		s.append(actual.Min, builder)
 		builder.WriteString(" AND ")

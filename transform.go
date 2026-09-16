@@ -98,6 +98,14 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 	switch actual := n.(type) {
 	case *expr.Collate:
 		return stripCollateNode(actual.X)
+	case *expr.Subscript:
+		var err error
+		actual.X, err = stripCollateNode(actual.X)
+		if err != nil {
+			return nil, err
+		}
+		actual.Index, err = stripCollateNode(actual.Index)
+		return actual, err
 	case *expr.Binary:
 		stripped, err := stripCollateNode(actual.X)
 		if err != nil {
@@ -306,6 +314,8 @@ func hasCollate(n node.Node) bool {
 		return false
 	case *expr.Collate:
 		return true
+	case *expr.Subscript:
+		return hasCollate(actual.X) || hasCollate(actual.Index)
 	case *expr.Binary:
 		return hasCollate(actual.X) || hasCollate(actual.Y)
 	case *expr.Parenthesis:

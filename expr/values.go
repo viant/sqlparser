@@ -132,9 +132,12 @@ func NewValues(n node.Node) (*Values, error) {
 		}
 	case *Parenthesis:
 		list, ok := actual.X.([]node.Node)
+		if !ok && actual.X != nil {
+			return newParenthesizedValues(actual.X)
+		}
 		if ok {
 			for _, item := range list {
-				v, err := NewValues(item)
+				v, err := newParenthesizedValues(item)
 				if err != nil {
 					return nil, err
 				}
@@ -169,5 +172,18 @@ func NewValues(n node.Node) (*Values, error) {
 		return &values, nil
 	}
 
+	return nil, fmt.Errorf("unsupported value node: %T", n)
+}
+
+// Parenthesized values may contain literals, placeholders and value wrappers.
+// Do not delegate computed children to NewValues' legacy Binary handling:
+// that extracts an operand rather than evaluating the expression.
+func newParenthesizedValues(n node.Node) (*Values, error) {
+	switch actual := n.(type) {
+	case *Literal, *Placeholder, *Parenthesis:
+		return NewValues(n)
+	case *Collate:
+		return newParenthesizedValues(actual.X)
+	}
 	return nil, fmt.Errorf("unsupported value node: %T", n)
 }

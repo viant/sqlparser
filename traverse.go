@@ -110,6 +110,9 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 		}
 	case *expr.Collate:
 		traverse(actual.X, visitor)
+	case *expr.Subscript:
+		traverse(actual.X, visitor)
+		traverse(actual.Index, visitor)
 	case *expr.Range:
 		traverse(actual.Min, visitor)
 		traverse(actual.Max, visitor)

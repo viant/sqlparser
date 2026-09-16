@@ -1,6 +1,7 @@
 package sqlparser
 
 import (
+	"fmt"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/node"
@@ -10,6 +11,42 @@ import (
 )
 
 func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
+	operand, err := expectOperandBase(cursor)
+	if err != nil || operand == nil {
+		return operand, err
+	}
+	for {
+		// A separated [name] is a bracket-quoted alias in supported SQL
+		// dialects. Only an adjacent bracket starts postfix element access.
+		if cursor.Pos >= len(cursor.Input) || cursor.Input[cursor.Pos] != '[' || cursor.Pos > 0 && source.IsWhitespace(cursor.Input[cursor.Pos-1]) {
+			return operand, nil
+		}
+		cursor.Pos++
+		index, err := expectExpression(cursor)
+		if err != nil {
+			return nil, err
+		}
+		skipExpressionSpace(cursor)
+		if cursor.Pos >= len(cursor.Input) || cursor.Input[cursor.Pos] != ']' {
+			return nil, fmt.Errorf("expected closing subscript ']' at byte %d", cursor.Pos)
+		}
+		cursor.Pos++
+		operand = &expr.Subscript{X: operand, Index: index}
+		operand, err = applyCollate(cursor, operand)
+		if err != nil {
+			return nil, err
+		}
+		// Field selection on computed values has no native representation yet.
+		// Do not let the query parser accept only the prefix before the dot.
+		tail := *cursor
+		skipExpressionSpace(&tail)
+		if tail.Pos < len(tail.Input) && tail.Input[tail.Pos] == '.' {
+			return nil, fmt.Errorf("unsupported field access after subscript at byte %d", tail.Pos)
+		}
+	}
+}
+
+func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 	literal, err := TryParseLiteral(cursor)
 	if literal != nil || err != nil {
 		if err != nil {
@@ -35,6 +72,19 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		commentBlockMatcher,
 	)
 	pos := cursor.Pos
+	// OFFSET is also a pagination keyword, but OFFSET(...) in an operand
+	// position is a function (not a query clause).
+	if match.Code == windowTokenCode && strings.EqualFold(match.Text(cursor), "OFFSET") {
+		if call := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher); call.Code == parenthesesCode {
+			raw := call.Text(cursor)
+			args, err := parseCallArguments(cursor, "OFFSET", raw, pos)
+			if err != nil {
+				return nil, err
+			}
+			return applyCollate(cursor, &expr.Call{X: expr.NewSelector("OFFSET"), Raw: raw, Args: args})
+		}
+		cursor.Pos = pos
+	}
 
 	switch match.Code {
 	case selectorTokenCode, placeholderTokenCode:
@@ -198,6 +248,15 @@ func parseCallArguments(cursor *parsly.Cursor, name, raw string, pos int) ([]nod
 		}
 		argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
 		argCursor.OnError = cursor.OnError
+		// EXISTS takes a query, not a scalar argument list. Keep the query in
+		// the AST so traversal and grouped projection can preserve its scope.
+		if strings.EqualFold(name, "exists") {
+			queryNode, err := parseExistsQuery(argCursor)
+			if err != nil {
+				return nil, err
+			}
+			return []node.Node{queryNode}, nil
+		}
 		list := query.List{}
 		if err := parseCallArgs(argCursor, &list); err != nil {
 			return nil, err

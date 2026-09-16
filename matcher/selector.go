@@ -40,7 +40,7 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 		if pos < size && (IsLetter(input[pos]) || input[pos] == '_' || input[pos] == '$' || input[pos] >= '0' && input[pos] <= '9') {
 			return 0
 		}
-	} else if startsWithCharacter := IsLetter(input[pos]); startsWithCharacter || input[pos] == '$' {
+	} else if startsWithCharacter := IsLetter(input[pos]); startsWithCharacter || input[pos] == '$' || input[pos] == '_' {
 		pos++
 		matched++
 	} else if input[pos] == '[' {

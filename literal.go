@@ -1,8 +1,11 @@
 package sqlparser
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/source"
 )
 
 // ParseLiteral parses literal
@@ -46,6 +49,20 @@ func parseLiteral(cursor *parsly.Cursor, shallRaiseInvalidToken bool) (*expr.Lit
 	case parsly.EOF:
 		return nil, nil
 	case parsly.Invalid:
+		// Consume dollar-quoted text as a whole operand, just as the source
+		// scanner does, so projection boundary checks do not stop inside it.
+		if cursor.Pos < len(cursor.Input) && cursor.Input[cursor.Pos] == '$' {
+			text := cursor.Input[cursor.Pos:]
+			if size := source.DollarQuoteDelimiterSize(text); size > 0 {
+				close := bytes.Index(text[size:], text[:size])
+				if close < 0 {
+					return nil, fmt.Errorf("unclosed SQL quoted text at byte %d", cursor.Pos)
+				}
+				end := size + close + size
+				cursor.Pos += end
+				return expr.NewStringLiteral(string(text[:end])), nil
+			}
+		}
 		if shallRaiseInvalidToken {
 			return nil, cursor.NewError(literalTokens...)
 		}

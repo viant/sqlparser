@@ -11,10 +11,10 @@ func FindTopLevelKeyword(source, keyword string, start int) int {
 	}
 	for pos, ok := scanner.Next(); ok; pos, ok = scanner.Next() {
 		switch source[pos] {
-		case '(', '{':
+		case '(', '{', '[':
 			depth++
 			continue
-		case ')', '}':
+		case ')', '}', ']':
 			if depth > 0 {
 				depth--
 			}
@@ -83,9 +83,9 @@ func CriteriaBoundary(source string) int {
 	depth := 0
 	for pos, ok := scanner.Next(); ok; pos, ok = scanner.Next() {
 		switch source[pos] {
-		case '(':
+		case '(', '[':
 			depth++
-		case ')':
+		case ')', ']':
 			if depth > 0 {
 				depth--
 			}
@@ -128,9 +128,9 @@ func SplitTopLevelAlias(source string) (string, string) {
 	depth, lastSpace := 0, -1
 	for pos, ok := scanner.Next(); ok; pos, ok = scanner.Next() {
 		switch source[pos] {
-		case '(':
+		case '(', '[':
 			depth++
-		case ')':
+		case ')', ']':
 			if depth > 0 {
 				depth--
 			}
