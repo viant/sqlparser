@@ -4,6 +4,7 @@ import (
 	"github.com/viant/parsly"
 	del "github.com/viant/sqlparser/delete"
 	"github.com/viant/sqlparser/expr"
+	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
 )
 
@@ -62,6 +63,7 @@ func buildDeleteTarget(stmt *del.Statement, cursor *parsly.Cursor) (int, error) 
 
 		case joinToken:
 			join := query.NewJoin(matched.Text(cursor))
+			join.Span = node.Span{Begin: uint32(matched.Offset), End: uint32(matched.Offset + matched.Size)}
 			if _, err := parseDeleteJoin(cursor, join); err != nil {
 				return lastMatched, err
 			}

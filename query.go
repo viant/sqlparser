@@ -275,13 +275,21 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 			literal := expr.NewNumericLiteral(match.Text(cursor))
 			switch strings.ToLower(matchedText) {
 			case "limit":
+				if dest.Limit != nil {
+					return false, fmt.Errorf("duplicate LIMIT clause")
+				}
 				dest.Limit = literal
 			case "offset":
+				if dest.Offset != nil {
+					return false, fmt.Errorf("duplicate OFFSET clause")
+				}
 				dest.Offset = literal
 			}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
 			return matchPostFrom(cursor, dest, match)
 		}
+		match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
+		return matchPostFrom(cursor, dest, match)
 	case parsly.EOF:
 		return true, nil
 	default:

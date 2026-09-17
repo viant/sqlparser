@@ -26,6 +26,7 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 			return err
 		}
 	}
+	join.End = uint32(cursor.Pos)
 	match := cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher, onKeywordMatcher)
 	if match.Code == commentBlock {
 		join.Comments = match.Text(cursor)
@@ -121,6 +122,7 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 		join.Comments = match.Text(cursor)
 		match = cursor.MatchAfterOptional(whitespaceMatcher, onKeywordMatcher)
 	}
+	onBegin := match.Offset
 	switch match.Code {
 	case onKeyword:
 	default:
@@ -132,6 +134,9 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 	if err := parseBinaryExpr(cursor, binary); err != nil {
 		return match, err
 	}
+	onEnd := trimSourceWhitespace(cursor.Input, cursor.Pos)
+	join.OnSpan = node.Span{Begin: uint32(onBegin), End: uint32(onEnd)}
+	join.End = uint32(onEnd)
 	match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher)
 	if match.Code == parsly.EOF {
 		return match, nil
@@ -144,6 +149,21 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 		}
 	}
 	return match, nil
+}
+
+func trimSourceWhitespace(input []byte, end int) int {
+	if end > len(input) {
+		end = len(input)
+	}
+	for end > 0 {
+		switch input[end-1] {
+		case ' ', '\t', '\n', '\r':
+			end--
+		default:
+			return end
+		}
+	}
+	return end
 }
 
 func appendJoin(cursor *parsly.Cursor, match *parsly.TokenMatch, dest *query.Select, expectOn bool) error {

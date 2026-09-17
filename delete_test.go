@@ -1,8 +1,10 @@
 package sqlparser
 
 import (
-	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseDelete(t *testing.T) {
@@ -41,5 +43,23 @@ func TestParseDelete(t *testing.T) {
 		}
 
 		assert.Equal(t, testcase.expect, Stringify(statement), testcase.description)
+	}
+}
+
+func TestParseDeletePopulatesJoinSourceSpans(t *testing.T) {
+	sql := "DELETE p FROM PRODUCTS p JOIN OTHER o ON p.ID = o.PRODUCT_ID WHERE p.ID = 10"
+	statement, err := ParseDelete(sql)
+	if err != nil {
+		t.Fatalf("ParseDelete() error = %v", err)
+	}
+	if len(statement.Joins) != 1 {
+		t.Fatalf("joins = %d, want 1", len(statement.Joins))
+	}
+	join := statement.Joins[0]
+	joinStart := strings.Index(sql, "JOIN OTHER")
+	onStart := strings.Index(sql, "ON p.ID")
+	onEnd := strings.Index(sql, " WHERE")
+	if int(join.Begin) != joinStart || int(join.End) != onEnd || int(join.OnSpan.Begin) != onStart || int(join.OnSpan.End) != onEnd {
+		t.Fatalf("spans = join[%d:%d] on[%d:%d], want join[%d:%d] on[%d:%d]", join.Begin, join.End, join.OnSpan.Begin, join.OnSpan.End, joinStart, onEnd, onStart, onEnd)
 	}
 }
