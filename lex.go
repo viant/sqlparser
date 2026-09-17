@@ -93,6 +93,7 @@ var nextMatcher = parsly.NewToken(nextCode, ",", matcher.NewByte(','))
 var asKeywordMatcher = parsly.NewToken(asKeyword, "AS", matcher.NewKeyword("as", &option.Case{}))
 var starTokenMatcher = parsly.NewToken(starTokenCode, "*", matcher.NewByte('*'))
 var notOperatorMatcher = parsly.NewToken(notOperator, "NOT", matcher.NewKeyword("not", &option.Case{}))
+var bitwiseNotMatcher = parsly.NewToken(notOperator, "~", matcher.NewByte('~'))
 var nullMatcher = parsly.NewToken(nullTokenCode, "NULL", matcher.NewKeyword("null", &option.Case{}))
 var selectionKindMatcher = parsly.NewToken(selectionKindCode, "ALL|DISTINCT|STRUCT", selectionModifier{
 	keywords:          matcher.NewSet([]string{"ALL", "DISTINCT", "STRUCT"}, &option.Case{}),
@@ -161,7 +162,7 @@ var insertIntoKeywordMatcher = parsly.NewToken(insertIntoKeyword, "INSERT INTO",
 
 var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", matcher.NewKeyword("values", &option.Case{}))
 
-var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "=", "-", ">", "<", "*", "/", "in", "not in", "is not", "is", "like"}, &option.Case{}))
+var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "&", "^", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", matcher.NewSet([]string{"and", "or"}, &option.Case{}))

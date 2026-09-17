@@ -27,7 +27,7 @@ func (b *Binary) Normalize() *Binary {
 	normalized.Y = right.Normalize()
 	right = normalized.Y.(*Binary)
 	leftPrecedence, rightPrecedence := binaryPrecedence(normalized.Op), binaryPrecedence(right.Op)
-	if rightPrecedence > 0 && (leftPrecedence > rightPrecedence || leftAssociativeArithmetic(normalized.Op, right.Op)) {
+	if rightPrecedence > 0 && (leftPrecedence > rightPrecedence || leftAssociativeValueOperator(normalized.Op, right.Op)) {
 		xBin := (&Binary{X: normalized.X, Y: right.X, Op: normalized.Op}).Normalize()
 		return (&Binary{X: xBin, Y: right.Y, Op: right.Op}).Normalize()
 	}
@@ -42,22 +42,30 @@ func binaryPrecedence(op string) int {
 		return 2
 	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "BETWEEN":
 		return 3
-	case "+", "-":
+	case "|":
 		return 4
-	case "*", "/":
+	case "^":
 		return 5
+	case "&":
+		return 6
+	case "<<", ">>":
+		return 7
+	case "+", "-":
+		return 8
+	case "*", "/":
+		return 9
 	default:
 		return 0
 	}
 }
 
-func leftAssociativeArithmetic(left, right string) bool {
+func leftAssociativeValueOperator(left, right string) bool {
 	leftPrecedence, rightPrecedence := binaryPrecedence(left), binaryPrecedence(right)
 	if leftPrecedence == 0 || leftPrecedence != rightPrecedence {
 		return false
 	}
 	switch leftPrecedence {
-	case 4, 5:
+	case 4, 5, 6, 7, 8, 9:
 		return true
 	default:
 		return false

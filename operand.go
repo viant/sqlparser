@@ -66,6 +66,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		caseBlockMatcher,
 		starTokenMatcher,
 		notOperatorMatcher,
+		bitwiseNotMatcher,
 		nullMatcher,
 		placeholderMatcher,
 		selectorMatcher,
