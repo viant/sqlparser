@@ -240,6 +240,9 @@ func applyCollate(cursor *parsly.Cursor, n node.Node) (node.Node, error) {
 func parseCallArguments(cursor *parsly.Cursor, name, raw string, pos int) ([]node.Node, error) {
 	var args []node.Node
 	if len(raw) > 0 {
+		if strings.EqualFold(name, "extract") {
+			return parseExtractArguments(cursor, raw, pos)
+		}
 		if strings.EqualFold(name, "cast") {
 			if index := source.FindTopLevelKeyword(raw[1:len(raw)-1], "AS", 0); index >= 0 {
 				return parseCastArguments(cursor, raw, pos, index)
