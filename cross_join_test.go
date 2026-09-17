@@ -18,13 +18,13 @@ func TestCrossJoinWithoutOn(t *testing.T) {
 			" UNION ALL SELECT id FROM features",
 		} {
 			t.Run(keyword+suffix, func(t *testing.T) {
-				SQL := "SELECT fi.id FROM UNNEST(ao.td_stats_by_hour) hourly " + keyword +
-					" UNNEST(hourly.lines_feature_ineligibility) line " + keyword +
-					" UNNEST(line.feature_ineligibility) fi" + suffix
+				SQL := "SELECT fi.id FROM UNNEST(ao.hourly_stats) hourly " + keyword +
+					" UNNEST(hourly.items) line " + keyword +
+					" UNNEST(line.metrics) fi" + suffix
 				parsed, err := ParseQuery(SQL)
 				require.NoError(t, err)
 				require.GreaterOrEqual(t, len(parsed.Joins), 2)
-				for i, arg := range []string{"hourly.lines_feature_ineligibility", "line.feature_ineligibility"} {
+				for i, arg := range []string{"hourly.items", "line.metrics"} {
 					join := parsed.Joins[i]
 					require.Equal(t, keyword, join.Raw)
 					require.Nil(t, join.On)
@@ -67,13 +67,13 @@ func TestConditionalJoinsStillRequireOn(t *testing.T) {
 	}
 }
 
-func TestDiagnosticsFeatureIneligibilityCrossJoins(t *testing.T) {
+func TestCorrelatedArrayCrossJoins(t *testing.T) {
 	for _, acl := range []string{"ao.id IN (?)", "ao.id IN (?) AND ao.tenant_id = ?"} {
 		SQL := "SELECT ao.id, TO_JSON_STRING(ARRAY(SELECT AS STRUCT fi.id, COUNT(*) AS incidents " +
-			"FROM UNNEST(ao.td_stats_by_hour) hourly " +
-			"CROSS JOIN UNNEST(hourly.lines_feature_ineligibility) line " +
-			"CROSS JOIN UNNEST(line.feature_ineligibility) fi " +
-			"WHERE fi.id > ? GROUP BY fi.id ORDER BY fi.id LIMIT 20)) AS incident_feature_ineligibility_json " +
+			"FROM UNNEST(ao.hourly_stats) hourly " +
+			"CROSS JOIN UNNEST(hourly.items) line " +
+			"CROSS JOIN UNNEST(line.metrics) fi " +
+			"WHERE fi.id > ? GROUP BY fi.id ORDER BY fi.id LIMIT 20)) AS item_metrics_json " +
 			"FROM orders ao WHERE " + acl
 		parsed, err := ParseQuery(SQL)
 		require.NoError(t, err)

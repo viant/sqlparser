@@ -10,7 +10,7 @@ import (
 )
 
 func TestStructNamedFields(t *testing.T) {
-	fields := "CAST(NULL AS STRING) AS feature, CAST(NULL AS FLOAT64) AS td_count, CAST(NULL AS INT64) AS td_line_hours"
+	fields := "CAST(NULL AS STRING) AS feature, CAST(NULL AS FLOAT64) AS sample_count, CAST(NULL AS INT64) AS duration_hours"
 	for _, name := range []string{"STRUCT", "struct", "STRUCT \n"} {
 		t.Run(name, func(t *testing.T) {
 			parsed, err := ParseQuery("SELECT " + name + "(" + fields + ") AS result FROM orders")
@@ -18,7 +18,7 @@ func TestStructNamedFields(t *testing.T) {
 			require.Empty(t, parsed.Kind)
 			call := parsed.List[0].Expr.(*expr.Call)
 			require.Len(t, call.Args, 3)
-			for i, alias := range []string{"feature", "td_count", "td_line_hours"} {
+			for i, alias := range []string{"feature", "sample_count", "duration_hours"} {
 				field := call.Args[i].(*query.Item)
 				require.Equal(t, alias, field.Alias)
 				cast, err := CastExpression(field.Expr.(*expr.Call))

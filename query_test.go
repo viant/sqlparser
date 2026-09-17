@@ -80,8 +80,8 @@ func TestParseSelect(t *testing.T) {
 			},
 			{
 				description: "with recursive multi-cte",
-				SQL:         `WITH RECURSIVE sub AS (SELECT t.ID, t.PARENT_ID, t.NAME, t.ID AS LEVEL_ID FROM CI_TAXONOMY t UNION ALL SELECT c.ID, c.PARENT_ID, c.NAME, sub.LEVEL_ID FROM CI_TAXONOMY c JOIN sub ON c.PARENT_ID = sub.ID), level AS (SELECT t.ID, t.PROVIDER_ID, t.PARENT_ID, t.NAME, t.PROVIDER_KEY, t.DESCRIPTION, t.PROVIDER_FEE_ID, t.ADVERTISER_ID, t.CREATED, t.UPDATED, t.TARGETABLE, t.STATUS FROM CI_TAXONOMY t JOIN (SELECT DISTINCT LEVEL_ID FROM sub WHERE LOWER(sub.NAME) LIKE CONCAT('%', LOWER($Name), '%')) hit ON hit.LEVEL_ID = t.ID), parents AS (SELECT l.ID AS NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, 1 AS DEPTH FROM level l JOIN CI_TAXONOMY p ON p.ID = l.PARENT_ID WHERE l.PARENT_ID IS NOT NULL AND l.PARENT_ID <> 0 UNION ALL SELECT parents.NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, parents.DEPTH + 1 AS DEPTH FROM parents JOIN CI_TAXONOMY p ON p.ID = parents.NEXT_ID WHERE parents.NEXT_ID IS NOT NULL AND parents.NEXT_ID <> 0), parent_paths AS (SELECT NODE_ID, JSON_ARRAYAGG(NAME ORDER BY DEPTH ASC) AS PARENT_PATH FROM parents GROUP BY NODE_ID) SELECT l.ID, l.PROVIDER_ID, l.PARENT_ID, l.NAME, l.PROVIDER_KEY, l.DESCRIPTION, l.PROVIDER_FEE_ID, l.ADVERTISER_ID, l.CREATED, l.UPDATED, l.TARGETABLE, l.STATUS, (CASE l.Status WHEN 0 THEN 'Inactive' WHEN 1 THEN 'Active' WHEN 2 THEN 'Archived' ELSE '' END) AS STATUS_NAME, COALESCE(pp.PARENT_PATH, JSON_ARRAY()) AS PARENT_PATH, '' AS PROVIDER_THIRD_PARTY FROM level l LEFT JOIN parent_paths pp ON pp.NODE_ID = l.ID`,
-				expect:      `WITH RECURSIVE sub AS (SELECT t.ID, t.PARENT_ID, t.NAME, t.ID AS LEVEL_ID FROM CI_TAXONOMY t UNION ALL SELECT c.ID, c.PARENT_ID, c.NAME, sub.LEVEL_ID FROM CI_TAXONOMY c JOIN sub ON c.PARENT_ID = sub.ID), level AS (SELECT t.ID, t.PROVIDER_ID, t.PARENT_ID, t.NAME, t.PROVIDER_KEY, t.DESCRIPTION, t.PROVIDER_FEE_ID, t.ADVERTISER_ID, t.CREATED, t.UPDATED, t.TARGETABLE, t.STATUS FROM CI_TAXONOMY t JOIN (SELECT DISTINCT LEVEL_ID FROM sub WHERE LOWER(sub.NAME) LIKE CONCAT('%', LOWER($Name), '%')) hit ON hit.LEVEL_ID = t.ID), parents AS (SELECT l.ID AS NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, 1 AS DEPTH FROM level l JOIN CI_TAXONOMY p ON p.ID = l.PARENT_ID WHERE l.PARENT_ID IS NOT NULL AND l.PARENT_ID <> 0 UNION ALL SELECT parents.NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, parents.DEPTH + 1 AS DEPTH FROM parents JOIN CI_TAXONOMY p ON p.ID = parents.NEXT_ID WHERE parents.NEXT_ID IS NOT NULL AND parents.NEXT_ID <> 0), parent_paths AS (SELECT NODE_ID, JSON_ARRAYAGG(NAME ORDER BY DEPTH ASC) AS PARENT_PATH FROM parents GROUP BY NODE_ID) SELECT l.ID, l.PROVIDER_ID, l.PARENT_ID, l.NAME, l.PROVIDER_KEY, l.DESCRIPTION, l.PROVIDER_FEE_ID, l.ADVERTISER_ID, l.CREATED, l.UPDATED, l.TARGETABLE, l.STATUS, (CASE l.Status WHEN 0 THEN 'Inactive' WHEN 1 THEN 'Active' WHEN 2 THEN 'Archived' ELSE '' END) AS STATUS_NAME, COALESCE(pp.PARENT_PATH, JSON_ARRAY()) AS PARENT_PATH, '' AS PROVIDER_THIRD_PARTY FROM level l LEFT JOIN parent_paths pp ON pp.NODE_ID = l.ID`,
+				SQL:         `WITH RECURSIVE sub AS (SELECT t.ID, t.PARENT_ID, t.NAME, t.ID AS LEVEL_ID FROM APP_CATEGORY t UNION ALL SELECT c.ID, c.PARENT_ID, c.NAME, sub.LEVEL_ID FROM APP_CATEGORY c JOIN sub ON c.PARENT_ID = sub.ID), level AS (SELECT t.ID, t.PROVIDER_ID, t.PARENT_ID, t.NAME, t.PROVIDER_KEY, t.DESCRIPTION, t.PROVIDER_FEE_ID, t.CUSTOMER_ID, t.CREATED, t.UPDATED, t.TARGETABLE, t.STATUS FROM APP_CATEGORY t JOIN (SELECT DISTINCT LEVEL_ID FROM sub WHERE LOWER(sub.NAME) LIKE CONCAT('%', LOWER($Name), '%')) hit ON hit.LEVEL_ID = t.ID), parents AS (SELECT l.ID AS NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, 1 AS DEPTH FROM level l JOIN APP_CATEGORY p ON p.ID = l.PARENT_ID WHERE l.PARENT_ID IS NOT NULL AND l.PARENT_ID <> 0 UNION ALL SELECT parents.NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, parents.DEPTH + 1 AS DEPTH FROM parents JOIN APP_CATEGORY p ON p.ID = parents.NEXT_ID WHERE parents.NEXT_ID IS NOT NULL AND parents.NEXT_ID <> 0), parent_paths AS (SELECT NODE_ID, JSON_ARRAYAGG(NAME ORDER BY DEPTH ASC) AS PARENT_PATH FROM parents GROUP BY NODE_ID) SELECT l.ID, l.PROVIDER_ID, l.PARENT_ID, l.NAME, l.PROVIDER_KEY, l.DESCRIPTION, l.PROVIDER_FEE_ID, l.CUSTOMER_ID, l.CREATED, l.UPDATED, l.TARGETABLE, l.STATUS, (CASE l.Status WHEN 0 THEN 'Inactive' WHEN 1 THEN 'Active' WHEN 2 THEN 'Archived' ELSE '' END) AS STATUS_NAME, COALESCE(pp.PARENT_PATH, JSON_ARRAY()) AS PARENT_PATH, '' AS PROVIDER_THIRD_PARTY FROM level l LEFT JOIN parent_paths pp ON pp.NODE_ID = l.ID`,
+				expect:      `WITH RECURSIVE sub AS (SELECT t.ID, t.PARENT_ID, t.NAME, t.ID AS LEVEL_ID FROM APP_CATEGORY t UNION ALL SELECT c.ID, c.PARENT_ID, c.NAME, sub.LEVEL_ID FROM APP_CATEGORY c JOIN sub ON c.PARENT_ID = sub.ID), level AS (SELECT t.ID, t.PROVIDER_ID, t.PARENT_ID, t.NAME, t.PROVIDER_KEY, t.DESCRIPTION, t.PROVIDER_FEE_ID, t.CUSTOMER_ID, t.CREATED, t.UPDATED, t.TARGETABLE, t.STATUS FROM APP_CATEGORY t JOIN (SELECT DISTINCT LEVEL_ID FROM sub WHERE LOWER(sub.NAME) LIKE CONCAT('%', LOWER($Name), '%')) hit ON hit.LEVEL_ID = t.ID), parents AS (SELECT l.ID AS NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, 1 AS DEPTH FROM level l JOIN APP_CATEGORY p ON p.ID = l.PARENT_ID WHERE l.PARENT_ID IS NOT NULL AND l.PARENT_ID <> 0 UNION ALL SELECT parents.NODE_ID, p.ID AS CUR_ID, p.PARENT_ID AS NEXT_ID, p.NAME AS NAME, parents.DEPTH + 1 AS DEPTH FROM parents JOIN APP_CATEGORY p ON p.ID = parents.NEXT_ID WHERE parents.NEXT_ID IS NOT NULL AND parents.NEXT_ID <> 0), parent_paths AS (SELECT NODE_ID, JSON_ARRAYAGG(NAME ORDER BY DEPTH ASC) AS PARENT_PATH FROM parents GROUP BY NODE_ID) SELECT l.ID, l.PROVIDER_ID, l.PARENT_ID, l.NAME, l.PROVIDER_KEY, l.DESCRIPTION, l.PROVIDER_FEE_ID, l.CUSTOMER_ID, l.CREATED, l.UPDATED, l.TARGETABLE, l.STATUS, (CASE l.Status WHEN 0 THEN 'Inactive' WHEN 1 THEN 'Active' WHEN 2 THEN 'Archived' ELSE '' END) AS STATUS_NAME, COALESCE(pp.PARENT_PATH, JSON_ARRAY()) AS PARENT_PATH, '' AS PROVIDER_THIRD_PARTY FROM level l LEFT JOIN parent_paths pp ON pp.NODE_ID = l.ID`,
 			},
 			{
 				description: "with join alias",
@@ -385,19 +385,19 @@ func TestParseSelect(t *testing.T) {
 				SQL: `SELECT
     si.event_date,
     si.order_id,
-    si.audience_id,
+    si.group_id,
     fr.feature,
-    si.index_selectable,
-    si.selectable,
-    si.rejection,
-    fr.feature_ineligible_total,
-    fr.audience_ineligible_total,
-    fr.feature_ratio,
-    fr.estimated_rejection,
-    SAFE_DIVIDE(fr.estimated_rejection, NULLIF(si.rejection, 0)) AS rejection_share
-FROM ` + "`" + `viant-mediator.selector.soft_ineligiblities` + "`" + ` si,  UNNEST(si.feature_rejection_estimates) fr
+    si.indexed_count,
+    si.selected_count,
+    si.error_count,
+    fr.item_error_total,
+    fr.group_error_total,
+    fr.item_ratio,
+    fr.estimated_errors,
+    SAFE_DIVIDE(fr.estimated_errors, NULLIF(si.error_count, 0)) AS error_share
+FROM ` + "`" + `example-project.analytics.event_metrics` + "`" + ` si,  UNNEST(si.measurements) fr
 WHERE si.event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)`,
-				expect: "SELECT si.event_date, si.order_id, si.audience_id, fr.feature, si.index_selectable, si.selectable, si.rejection, fr.feature_ineligible_total, fr.audience_ineligible_total, fr.feature_ratio, fr.estimated_rejection, SAFE_DIVIDE(fr.estimated_rejection, NULLIF(si.rejection, 0)) AS rejection_share FROM `viant-mediator.selector.soft_ineligiblities` si , UNNEST(si.feature_rejection_estimates) fr WHERE si.event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)",
+				expect: "SELECT si.event_date, si.order_id, si.group_id, fr.feature, si.indexed_count, si.selected_count, si.error_count, fr.item_error_total, fr.group_error_total, fr.item_ratio, fr.estimated_errors, SAFE_DIVIDE(fr.estimated_errors, NULLIF(si.error_count, 0)) AS error_share FROM `example-project.analytics.event_metrics` si , UNNEST(si.measurements) fr WHERE si.event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)",
 			},
 
 			{
@@ -454,7 +454,7 @@ func TestParseSelect_BigQueryRawRegexLiteral(t *testing.T) {
 }
 
 func TestParseSelect_BigQueryUnnestJoinTarget(t *testing.T) {
-	sql := "SELECT si.event_date FROM `viant-mediator.selector.soft_ineligiblities` si, UNNEST(si.feature_rejection_estimates) fr"
+	sql := "SELECT si.event_date FROM `example-project.analytics.event_metrics` si, UNNEST(si.measurements) fr"
 	parsed, err := ParseQuery(sql)
 	if !assert.NoError(t, err) {
 		return
@@ -468,12 +468,12 @@ func TestParseSelect_BigQueryUnnestJoinTarget(t *testing.T) {
 	}
 	assert.Equal(t, "UNNEST", Stringify(call.X))
 	assert.Len(t, call.Args, 1)
-	assert.Equal(t, "si.feature_rejection_estimates", Stringify(call.Args[0]))
+	assert.Equal(t, "si.measurements", Stringify(call.Args[0]))
 	assert.Equal(t, "fr", parsed.Joins[0].Alias)
 }
 
-func TestParseSelect_SiteQualityWholeQuery(t *testing.T) {
-	data, err := os.ReadFile("testdata/site_quality.sql")
+func TestParseSelect_RankedMetricsWholeQuery(t *testing.T) {
+	data, err := os.ReadFile("testdata/ranked_metrics.sql")
 	if !assert.NoError(t, err) {
 		return
 	}

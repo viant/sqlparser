@@ -60,7 +60,7 @@ func bitwiseExpressionTree(n node.Node) string {
 	return Stringify(n)
 }
 
-func TestBitwiseForecastingPredicates(t *testing.T) {
+func TestBitwiseGroupedPredicates(t *testing.T) {
 	for _, predicate := range []string{
 		"BIT_COUNT(v.events & (1 << (v.seq))) > 0",
 		"EXISTS(SELECT 1 FROM segments s WHERE value IN (?, ?) AND v.batch_id = s.batch_id AND BIT_COUNT(s.events & (1 << (v.seq))) > 0)",
@@ -77,8 +77,8 @@ func TestBitwiseForecastingPredicates(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Captured by the supplied reproducer, with all real runtime filters intact.
-	fixture, err := os.ReadFile("testdata/forecast_bitwise.sql")
+	// A grouped query with correlated inclusion and exclusion filters.
+	fixture, err := os.ReadFile("testdata/grouped_bitwise.sql")
 	require.NoError(t, err)
 	parsed, err := ParseQuery(string(fixture))
 	require.NoError(t, err)

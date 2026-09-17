@@ -14,17 +14,17 @@ func TestPrimaryFromFunction(t *testing.T) {
 		SQL, name, alias string
 		args             int
 	}{
-		{"SELECT * FROM UNNEST(ao.td_stats_by_hour) hourly", "UNNEST", "hourly", 1},
-		{"SELECT * FROM unnest(ao.td_stats_by_hour) AS hourly", "unnest", "hourly", 1},
-		{"SELECT * FROM UNNEST(ao.td_stats_by_hour)", "UNNEST", "", 1},
-		{"SELECT * FROM UNNEST /* source */ (ao.td_stats_by_hour) hourly", "UNNEST", "hourly", 1},
-		{"SELECT * FROM UNNEST/*source*/(ao.td_stats_by_hour) hourly", "UNNEST", "hourly", 1},
-		{"SELECT * FROM UNNEST/*first*//*second*/(ao.td_stats_by_hour) AS hourly", "UNNEST", "hourly", 1},
-		{"SELECT * FROM UNNEST-- source\n(ao.td_stats_by_hour) hourly", "UNNEST", "hourly", 1},
-		{"SELECT * FROM analytics.hourly_stats/*source*/(ao.td_stats_by_hour) hourly", "analytics.hourly_stats", "hourly", 1},
+		{"SELECT * FROM UNNEST(ao.hourly_stats) hourly", "UNNEST", "hourly", 1},
+		{"SELECT * FROM unnest(ao.hourly_stats) AS hourly", "unnest", "hourly", 1},
+		{"SELECT * FROM UNNEST(ao.hourly_stats)", "UNNEST", "", 1},
+		{"SELECT * FROM UNNEST /* source */ (ao.hourly_stats) hourly", "UNNEST", "hourly", 1},
+		{"SELECT * FROM UNNEST/*source*/(ao.hourly_stats) hourly", "UNNEST", "hourly", 1},
+		{"SELECT * FROM UNNEST/*first*//*second*/(ao.hourly_stats) AS hourly", "UNNEST", "hourly", 1},
+		{"SELECT * FROM UNNEST-- source\n(ao.hourly_stats) hourly", "UNNEST", "hourly", 1},
+		{"SELECT * FROM analytics.hourly_stats/*source*/(ao.hourly_stats) hourly", "analytics.hourly_stats", "hourly", 1},
 		{"SELECT * FROM analytics.hourly_stats(?, SAFE_OFFSET(0)) AS hourly", "analytics.hourly_stats", "hourly", 2},
 		{"SELECT * FROM hourly_stats() hourly", "hourly_stats", "hourly", 0},
-		{"SELECT hourly.hour FROM UNNEST(ao.td_stats_by_hour) hourly JOIN hours h ON h.hour = hourly.hour WHERE h.hour > ?", "UNNEST", "hourly", 1},
+		{"SELECT hourly.hour FROM UNNEST(ao.hourly_stats) hourly JOIN hours h ON h.hour = hourly.hour WHERE h.hour > ?", "UNNEST", "hourly", 1},
 	} {
 		t.Run(tc.SQL, func(t *testing.T) {
 			parsed, err := ParseQuery(tc.SQL)
@@ -52,12 +52,12 @@ func TestPrimaryFromFunction(t *testing.T) {
 	}
 }
 
-func TestDiagnosticsArrayWithPrimaryUnnest(t *testing.T) {
+func TestCorrelatedArrayWithPrimaryUnnest(t *testing.T) {
 	for _, predicate := range []string{"ao.id IN (?)", "ao.id IN (?) AND ao.tenant_id = ?"} {
 		t.Run(predicate, func(t *testing.T) {
 			SQL := "SELECT ao.id, TO_JSON_STRING(ARRAY(SELECT AS STRUCT hourly.hour, SUM(hourly.bids) AS bids " +
-				"FROM UNNEST(ao.td_stats_by_hour) hourly WHERE hourly.hour >= ? " +
-				"GROUP BY hourly.hour ORDER BY hourly.hour LIMIT 20)) AS diagnostics FROM orders ao WHERE " + predicate
+				"FROM UNNEST(ao.hourly_stats) hourly WHERE hourly.hour >= ? " +
+				"GROUP BY hourly.hour ORDER BY hourly.hour LIMIT 20)) AS summary_json FROM orders ao WHERE " + predicate
 			parsed, err := ParseQuery(SQL)
 			require.NoError(t, err)
 			jsonCall := parsed.List[1].Expr.(*expr.Call)
@@ -65,7 +65,7 @@ func TestDiagnosticsArrayWithPrimaryUnnest(t *testing.T) {
 			inner := arrayCall.Args[0].(*query.Select)
 			from := inner.From.X.(*expr.Call)
 			require.Equal(t, "UNNEST", Stringify(from.X))
-			require.Equal(t, "ao.td_stats_by_hour", Stringify(from.Args[0]))
+			require.Equal(t, "ao.hourly_stats", Stringify(from.Args[0]))
 			require.Equal(t, "hourly", inner.From.Alias)
 			require.Len(t, inner.GroupBy, 1)
 			require.Len(t, inner.OrderBy, 1)
@@ -92,9 +92,9 @@ func TestDiagnosticsArrayWithPrimaryUnnest(t *testing.T) {
 
 func TestPrimaryFromFunctionRejectsMalformedArguments(t *testing.T) {
 	for _, source := range []string{
-		"UNNEST(ao.td_stats_by_hour", "UNNEST(,ao.td_stats_by_hour)",
-		"UNNEST(ao.td_stats_by_hour,)", "UNNEST(ao.td_stats_by_hour +)",
-		"UNNEST(ao.td_stats_by_hour))", "UNNEST(ao.td_stats_by_hour) h extra",
+		"UNNEST(ao.hourly_stats", "UNNEST(,ao.hourly_stats)",
+		"UNNEST(ao.hourly_stats,)", "UNNEST(ao.hourly_stats +)",
+		"UNNEST(ao.hourly_stats))", "UNNEST(ao.hourly_stats) h extra",
 	} {
 		_, err := ParseQuery("SELECT * FROM " + source)
 		require.Error(t, err, source)
@@ -103,12 +103,12 @@ func TestPrimaryFromFunctionRejectsMalformedArguments(t *testing.T) {
 
 func TestPrimaryFromFunctionStripCollate(t *testing.T) {
 	SQL := "SELECT TO_JSON_STRING(ARRAY(SELECT AS STRUCT hourly.hour FROM " +
-		"UNNEST(ao.td_stats_by_hour COLLATE nocase) hourly LIMIT 20)) AS diagnostics FROM orders ao"
+		"UNNEST(ao.hourly_stats COLLATE nocase) hourly LIMIT 20)) AS summary_json FROM orders ao"
 	stripped, err := StripCollate(SQL)
 	require.NoError(t, err)
 	parsed, err := ParseQuery(stripped)
 	require.NoError(t, err)
 	require.NotContains(t, stripped, "COLLATE")
-	require.Contains(t, stripped, "UNNEST(ao.td_stats_by_hour) hourly LIMIT 20")
+	require.Contains(t, stripped, "UNNEST(ao.hourly_stats) hourly LIMIT 20")
 	require.Equal(t, "orders", TableName(parsed))
 }

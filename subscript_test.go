@@ -13,18 +13,18 @@ func TestSubscript(t *testing.T) {
 		sql   string
 		count int
 	}{
-		{"IAB[0]", 1},
-		{"v.IAB[SAFE_OFFSET(0)]", 1},
-		{"`IAB`[OFFSET(1)]", 1},
-		{"IAB[SAFE_ORDINAL(1)]", 1},
-		{"IAB[positions[0]]", 2},
+		{"CATEGORIES[0]", 1},
+		{"v.CATEGORIES[SAFE_OFFSET(0)]", 1},
+		{"`CATEGORIES`[OFFSET(1)]", 1},
+		{"CATEGORIES[SAFE_ORDINAL(1)]", 1},
+		{"CATEGORIES[positions[0]]", 2},
 		{"matrix[0][1]", 2},
 		{"make_array(x)[OFFSET(0)]", 1},
-		{"(IAB)[OFFSET(0)]", 1},
-		{"IAB[IF(x = ']', 0, 1)]", 1},
-		{"IAB[0] + 1", 1},
-		{"IFNULL(STRING_AGG(DISTINCT IAB[SAFE_OFFSET(0)], ', ' LIMIT 20), '')", 1},
-		{"STRING_AGG(DISTINCT IAB[0], ', ' ORDER BY IAB[0] LIMIT 20)", 2},
+		{"(CATEGORIES)[OFFSET(0)]", 1},
+		{"CATEGORIES[IF(x = ']', 0, 1)]", 1},
+		{"CATEGORIES[0] + 1", 1},
+		{"IFNULL(STRING_AGG(DISTINCT CATEGORIES[SAFE_OFFSET(0)], ', ' LIMIT 20), '')", 1},
+		{"STRING_AGG(DISTINCT CATEGORIES[0], ', ' ORDER BY CATEGORIES[0] LIMIT 20)", 2},
 	} {
 		t.Run(tc.sql, func(t *testing.T) {
 			parsed, err := ParseQuery("SELECT " + tc.sql + " AS result FROM src v")
@@ -52,11 +52,11 @@ func TestSubscript(t *testing.T) {
 }
 
 func TestSubscriptTreeAndLineage(t *testing.T) {
-	q, err := ParseQuery("SELECT v.IAB[SAFE_OFFSET(position)] AS value, v.id FROM src v")
+	q, err := ParseQuery("SELECT v.CATEGORIES[SAFE_OFFSET(position)] AS value, v.id FROM src v")
 	require.NoError(t, err)
 	sub, ok := q.List[0].Expr.(*expr.Subscript)
 	require.True(t, ok)
-	require.Equal(t, "v.IAB", Stringify(sub.X))
+	require.Equal(t, "v.CATEGORIES", Stringify(sub.X))
 	call, ok := sub.Index.(*expr.Call)
 	require.True(t, ok)
 	require.Equal(t, "SAFE_OFFSET", Stringify(call.X))
@@ -130,7 +130,7 @@ func TestSubscriptCollateRoundTrip(t *testing.T) {
 }
 
 func TestSubscriptAggregateTree(t *testing.T) {
-	text := "IFNULL(STRING_AGG(DISTINCT IAB[SAFE_OFFSET(0)], ', ' LIMIT 20), '')"
+	text := "IFNULL(STRING_AGG(DISTINCT CATEGORIES[SAFE_OFFSET(0)], ', ' LIMIT 20), '')"
 	q, err := ParseQuery("SELECT " + text + " AS result FROM src")
 	require.NoError(t, err)
 	outer := q.List[0].Expr.(*expr.Call)

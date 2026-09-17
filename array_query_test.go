@@ -28,11 +28,11 @@ func TestArrayQueryArguments(t *testing.T) {
 	} {
 		for _, enclosed := range []string{body, "(" + body + ")", "((" + body + "))"} {
 			t.Run(enclosed, func(t *testing.T) {
-				SQL := "SELECT TO_JSON_STRING(ARRAY(" + enclosed + ")) AS diagnostics FROM orders outer_orders"
+				SQL := "SELECT TO_JSON_STRING(ARRAY(" + enclosed + ")) AS summary_json FROM orders outer_orders"
 				parsed, err := ParseQuery(SQL)
 				require.NoError(t, err)
 				require.Len(t, parsed.List, 1)
-				require.Equal(t, "diagnostics", parsed.List[0].Alias)
+				require.Equal(t, "summary_json", parsed.List[0].Alias)
 				jsonCall := parsed.List[0].Expr.(*expr.Call)
 				require.Len(t, jsonCall.Args, 1)
 				arrayCall := jsonCall.Args[0].(*expr.Call)
@@ -92,7 +92,7 @@ func TestArrayQueryRejectsIncompleteArguments(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			_, err := ParseCallExpr("ARRAY(" + body + ")")
 			require.Error(t, err)
-			_, err = ParseQuery("SELECT TO_JSON_STRING(ARRAY(" + body + ")) AS diagnostics")
+			_, err = ParseQuery("SELECT TO_JSON_STRING(ARRAY(" + body + ")) AS summary_json")
 			require.Error(t, err)
 		})
 	}
@@ -112,7 +112,7 @@ func TestArrayScalarArgumentsRemainSupported(t *testing.T) {
 }
 
 func TestArrayQueryStripCollate(t *testing.T) {
-	SQL := "SELECT TO_JSON_STRING(ARRAY(SELECT AS STRUCT status COLLATE nocase AS status FROM orders)) AS diagnostics"
+	SQL := "SELECT TO_JSON_STRING(ARRAY(SELECT AS STRUCT status COLLATE nocase AS status FROM orders)) AS summary_json"
 	stripped, err := StripCollate(SQL)
 	require.NoError(t, err)
 	require.False(t, strings.Contains(strings.ToUpper(stripped), "COLLATE"))
@@ -131,7 +131,7 @@ func TestArrayQueryStripCollatePreservesPagination(t *testing.T) {
 		"SELECT AS STRUCT status COLLATE nocase FROM orders LIMIT 20 OFFSET 2 UNION ALL SELECT AS STRUCT status FROM archive LIMIT 7 OFFSET 1",
 	} {
 		t.Run(body, func(t *testing.T) {
-			SQL := "SELECT TO_JSON_STRING(ARRAY(" + body + ")) AS diagnostics"
+			SQL := "SELECT TO_JSON_STRING(ARRAY(" + body + ")) AS summary_json"
 			stripped, err := StripCollate(SQL)
 			require.NoError(t, err)
 			require.NotContains(t, stripped, "COLLATE")

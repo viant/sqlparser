@@ -10,7 +10,7 @@ import (
 
 func TestExtractRoundTrip(t *testing.T) {
 	for _, sql := range []string{
-		"SELECT EXTRACT(HOUR FROM sp.hstamp) AS event_hour FROM signals sp",
+		"SELECT EXTRACT(HOUR FROM sp.event_time) AS event_hour FROM signals sp",
 		"SELECT extract(day from COALESCE(t.stamp, CURRENT_TIMESTAMP())) AS d FROM t",
 		"SELECT IFNULL(EXTRACT(YEAR FROM t.stamp), 0) AS y FROM t",
 	} {
@@ -26,7 +26,7 @@ func TestExtractRoundTrip(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	call, err := ParseCallExpr("EXTRACT(HOUR FROM sp.hstamp)")
+	call, err := ParseCallExpr("EXTRACT(HOUR FROM sp.event_time)")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func TestExtractRoundTrip(t *testing.T) {
 	if _, ok := arg.X.(*expr.Raw); !ok {
 		t.Fatal("date part must not be a column")
 	}
-	if got := Stringify(arg.Y); got != "sp.hstamp" {
+	if got := Stringify(arg.Y); got != "sp.event_time" {
 		t.Fatalf("operand: %s", got)
 	}
 	for _, sql := range []string{"EXTRACT()", "EXTRACT(HOUR)", "EXTRACT(FROM stamp)", "EXTRACT(HOUR FROM)", "EXTRACT(HOUR FROM x, y)", "EXTRACT(HOUR FROM x trailing)", "EXTRACT(HOUR FROM x +)", "EXTRACT(HOUR FROM x FROM y)"} {
