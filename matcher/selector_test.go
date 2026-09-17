@@ -57,3 +57,28 @@ func TestSelector_Match(t *testing.T) {
 		assert.Equal(t, useCase.matched, matched > 0, useCase.description)
 	}
 }
+
+func TestSelectorCommentBoundaries(t *testing.T) {
+	for _, tc := range []struct {
+		input, token string
+		isTable      bool
+	}{
+		{"UNNEST/*comment*/(items)", "UNNEST", true},
+		{"analytics.hourly_stats/*comment*/(items)", "analytics.hourly_stats", true},
+		{"records--comment\n", "records", true},
+		{"value/*comment*/", "value", false},
+		{"value--comment\n", "value", false},
+		{"project-name.dataset.records/*comment*/", "project-name.dataset.records", true},
+		{"path/to/records/*comment*/", "path/to/records", true},
+		{"`records/*literal*/` rest", "`records/*literal*/`", true},
+		{"[records--literal] rest", "[records--literal]", true},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			cursor := parsly.NewCursor("", []byte("  "+tc.input), 0)
+			cursor.Pos = 2
+			size := NewSelector(tc.isTable).Match(cursor)
+			assert.Equal(t, tc.token, string(cursor.Input[cursor.Pos:cursor.Pos+size]))
+			assert.Equal(t, 2, cursor.Pos, "matching must not advance the cursor")
+		})
+	}
+}

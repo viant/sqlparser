@@ -7,7 +7,7 @@ type Options struct {
 	onError              func(err error, cur *parsly.Cursor, destNode interface{}) error
 }
 
-// WithStructuralValidation rejects unbalanced parentheses and unclosed
+// WithStructuralValidation rejects unbalanced parentheses/subscripts and unclosed
 // quotes/comments before parsing. It does not promise full dialect validation.
 func WithStructuralValidation() Option {
 	return func(o *Options) { o.structuralValidation = true }

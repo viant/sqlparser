@@ -14,6 +14,10 @@ func TestCodeScannerPreviousSignificant(t *testing.T) {
 		"$$ ? $$ /* x */ ?", "$tag$ ? $tag$ -- x\n?", "$1 ? $unclosed$ ?",
 		"? /* unclosed", "'unclosed ?", "? -- a\n /* b */ -- c\n ?",
 		"SELECT :nested.Value /* x */ ? ?| ?& @?",
+		"a[b[?]] [alias]]?] ?", "a[IF(x = ']?', ?, 0)] ?",
+		"a[? /* ] ? */] ?", "a[? -- ] ?\n] ?",
+		"SELECT values[?] AS[alias]]?] FROM[src--?] ?",
+		"SELECT /* hint */ update[?] FROM src GROUP -- hint\nBY[?] ?",
 	} {
 		t.Run(SQL, func(t *testing.T) {
 			// Starting inside any quote/comment must retain the context that a
@@ -50,7 +54,7 @@ func TestCodeScannerPreviousSignificant(t *testing.T) {
 }
 
 func TestCodeScannerContextBoundedAllocations(t *testing.T) {
-	SQL := strings.Repeat("? /* ? */ '?' ? -- ?\n", 32766)
+	SQL := strings.Repeat("values[?] /* ? */ '?' ? -- ?\n", 32766)
 	allocs := testing.AllocsPerRun(1, func() {
 		scanner := NewCodeScanner(SQL, 0)
 		count := 0

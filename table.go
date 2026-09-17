@@ -77,6 +77,9 @@ func queryTableName(sel *query.Select) string {
 		return actual.Name
 	case *expr.Selector:
 		return trimEnclosure(actual)
+	case *expr.Call:
+		// A table-valued function is a source expression, not a physical table.
+		return ""
 	case *expr.Parenthesis:
 		raw := trimEnclosure(actual.Raw)
 		if sel, _ := ParseQuery(raw); sel != nil {

@@ -10,6 +10,12 @@ import (
 func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
 	defer func() {
 		if err == nil && binary != nil && binary.Op != "" {
+			// Every operator needs complete operands, including at clause and
+			// alias boundaries where expectOperand can return nil without error.
+			if !completeExpression(binary) {
+				err = cursor.NewError(exprMatcher)
+				return
+			}
 			*binary = *binary.Normalize()
 		}
 	}()

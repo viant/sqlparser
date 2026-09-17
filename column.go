@@ -51,6 +51,8 @@ func newColumn(item *query.Item) *Column {
 		return &Column{Name: name, Alias: item.Alias, Type: item.DataType, Tag: item.Tag, Expression: call}
 	case *expr.Ident:
 		return &Column{Name: actual.Name, Alias: item.Alias, Type: item.DataType, Tag: item.Tag}
+	case *expr.Subscript:
+		return &Column{Alias: item.Alias, Type: item.DataType, Tag: item.Tag, Expression: Stringify(actual)}
 	case *expr.Selector:
 		return &Column{Name: Stringify(actual.X), Namespace: actual.Name, Type: item.DataType, Alias: item.Alias, Tag: item.Tag}
 	case *expr.Star:

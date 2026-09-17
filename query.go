@@ -34,6 +34,7 @@ func removeSQLComments(SQL string) string {
 }
 
 func parseQuery(cursor *parsly.Cursor, dest *query.Select) error {
+	skipExpressionSpace(cursor)
 	match := cursor.MatchAfterOptional(whitespaceMatcher, withKeywordMatcher, selectKeywordMatcher)
 
 beginMatch:
@@ -44,12 +45,14 @@ beginMatch:
 		}
 		allowRecursive := true
 	With:
+		skipExpressionSpace(cursor)
 		withSelect := &query.WithSelect{X: &query.Select{}}
 		dest.WithSelects = append(dest.WithSelects, withSelect)
 		if allowRecursive {
 			match = cursor.MatchAfterOptional(whitespaceMatcher, recursiveKeywordMatcher, identifierMatcher)
 			if match.Code == recursiveKeyword {
 				dest.WithRecursive = true
+				skipExpressionSpace(cursor)
 				match = cursor.MatchAfterOptional(whitespaceMatcher, identifierMatcher)
 			}
 			allowRecursive = false
@@ -64,6 +67,7 @@ beginMatch:
 		match = cursor.MatchAfterOptional(whitespaceMatcher, asKeywordMatcher, parenthesesMatcher)
 		if match.Code == asKeyword {
 			pos = cursor.Pos
+			skipExpressionSpace(cursor)
 			match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
 		}
 		if match.Code != parenthesesCode {
@@ -76,6 +80,7 @@ beginMatch:
 		if err := parseQuery(subCursor, withSelect.X); err != nil {
 			return err
 		}
+		skipExpressionSpace(cursor)
 		match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher)
 		if match.Code == nextCode {
 			goto With
@@ -83,13 +88,17 @@ beginMatch:
 		match = cursor.MatchAfterOptional(whitespaceMatcher, withKeywordMatcher, selectKeywordMatcher)
 		goto beginMatch
 	case selectKeyword:
-		match = cursor.MatchAfterOptional(whitespaceMatcher, selectionKindMatcher)
-		if match.Code == selectionKindCode {
-			dest.Kind = match.Text(cursor)
+		kind, asStruct, err := parseSelectKind(cursor)
+		if err != nil {
+			return err
 		}
+		dest.Kind = kind
 		dest.List = make(query.List, 0)
 		if err := parseSelectListItem(cursor, &dest.List); err != nil {
 			return err
+		}
+		if asStruct && !completeQueryProjections(dest) {
+			return cursor.NewError(exprMatcher)
 		}
 		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher)
 		pos := cursor.Pos
@@ -100,12 +109,21 @@ beginMatch:
 			switch match.Code {
 			case tableTokenCode:
 				identityOrAlias := match.Text(cursor)
-				withSelect := dest.WithSelects.Select(identityOrAlias)
-				if withSelect != nil {
-					dest.From.X = expr.NewSelector(identityOrAlias)
-					dest.From.Alias = ""
+				selector := expr.NewSelector(identityOrAlias)
+				dest.From.X = selector
+				// A primary FROM source may be a table-valued function. Parse
+				// its arguments with the same AST representation as JOIN calls.
+				afterName := cursor.Pos
+				skipExpressionSpace(cursor)
+				if call := cursor.MatchOne(parenthesesMatcher); call.Code == parenthesesCode {
+					raw := call.Text(cursor)
+					args, err := parseCallArguments(cursor, identityOrAlias, raw, afterName)
+					if err != nil {
+						return err
+					}
+					dest.From.X = &expr.Call{X: selector, Raw: raw, Args: args}
 				} else {
-					dest.From.X = expr.NewSelector(identityOrAlias)
+					cursor.Pos = afterName
 				}
 			case parenthesesCode:
 				dest.From.X = expr.NewRaw(match.Text(cursor))

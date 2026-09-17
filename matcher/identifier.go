@@ -6,7 +6,7 @@ import (
 
 type identifier struct{}
 
-//Match matches a string
+// Match matches a string
 func (n *identifier) Match(cursor *parsly.Cursor) (matched int) {
 	input := cursor.Input
 	pos := cursor.Pos
@@ -29,7 +29,7 @@ func (n *identifier) Match(cursor *parsly.Cursor) (matched int) {
 				continue
 			}
 			isLast := i+1 == len(input)
-			if !isLast && !(isWhitespace(input[i]) || input[i] == '(' || input[i] == ',') {
+			if !isLast && !(isWhitespace(input[i]) || input[i] == '(' || input[i] == ',' || input[i] == ']') {
 				return 0
 			}
 			return matched
@@ -39,7 +39,7 @@ func (n *identifier) Match(cursor *parsly.Cursor) (matched int) {
 	return matched
 }
 
-//IsLetter returns true if ltter
+// IsLetter returns true if ltter
 func IsLetter(b byte) bool {
 	if (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') {
 		return false
@@ -47,7 +47,7 @@ func IsLetter(b byte) bool {
 	return true
 }
 
-//NewIdentifier creates a string matcher
+// NewIdentifier creates a string matcher
 func NewIdentifier() *identifier {
 	return &identifier{}
 }

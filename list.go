@@ -62,7 +62,7 @@ func parseSelectListItem(cursor *parsly.Cursor, list *query.List) error {
 			}
 			return nil
 		default:
-			if item.Alias == "" || selectListBoundary(cursor, item, cursor.Input[aliasStart:aliasEnd]) {
+			if selectListBoundary(cursor, item, cursor.Input[aliasStart:aliasEnd]) {
 				return nil
 			}
 			err := cursor.NewError(nextMatcher, fromKeywordMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)

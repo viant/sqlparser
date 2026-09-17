@@ -2,7 +2,7 @@ package source
 
 import "fmt"
 
-// ValidateStructure checks parentheses and protected-region closure without
+// ValidateStructure checks parentheses, subscripts and protected-region closure without
 // imposing a dialect grammar on executable expressions or template semantics.
 func ValidateStructure(text string) error {
 	scanner := NewCodeScanner(text, 0)
@@ -17,18 +17,19 @@ func ValidateStructure(text string) error {
 		}
 		pos := scanner.position
 		switch text[pos] {
-		case '(':
+		case '(', '[':
 			groups = append(groups, pos)
-		case ')':
-			if len(groups) == 0 {
-				return fmt.Errorf("unexpected ')' at byte %d", pos)
+		case ')', ']':
+			if len(groups) == 0 || text[groups[len(groups)-1]] == '(' && text[pos] != ')' || text[groups[len(groups)-1]] == '[' && text[pos] != ']' {
+				return fmt.Errorf("unexpected '%c' at byte %d", text[pos], pos)
 			}
 			groups = groups[:len(groups)-1]
 		}
 		scanner.position++
 	}
 	if len(groups) > 0 {
-		return fmt.Errorf("unclosed '(' at byte %d", groups[len(groups)-1])
+		pos := groups[len(groups)-1]
+		return fmt.Errorf("unclosed '%c' at byte %d", text[pos], pos)
 	}
 	return nil
 }

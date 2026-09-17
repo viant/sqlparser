@@ -1,6 +1,11 @@
 package sqlparser
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/viant/sqlparser/expr"
+)
 
 func TestQueryStructuralValidation(t *testing.T) {
 	for _, tc := range []struct {
@@ -29,5 +34,15 @@ func TestStructuralValidationIsOptIn(t *testing.T) {
 	}
 	if _, err := ParseQuery("SELECT (", WithStructuralValidation()); err == nil {
 		t.Fatal("strict structure accepted unmatched group")
+	}
+}
+
+func TestDollarQuotedProjectionBoundary(t *testing.T) {
+	for _, literal := range []string{"$$($$", "$tag$[--)]$tag$"} {
+		SQL := "SELECT " + literal + " AS value FROM src WHERE id = 1"
+		q, err := ParseQuery(SQL, WithStructuralValidation())
+		require.NoError(t, err)
+		require.IsType(t, &expr.Literal{}, q.List[0].Expr)
+		require.Equal(t, SQL, Stringify(q))
 	}
 }

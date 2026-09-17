@@ -10,15 +10,21 @@ func ReadGroupString(source string, start int, open, close byte) (string, int, b
 	if open == '[' && close == ']' {
 		scanner := &CodeScanner{source: source, position: start}
 		protected, ok := scanner.protected()
-		if !ok || !protected.closed {
-			return "", start, false
+		if ok {
+			if !protected.closed {
+				return "", start, false
+			}
+			return source[start:protected.end], protected.end, true
 		}
-		return source[start:protected.end], protected.end, true
 	}
 	scanner := &CodeScanner{source: source, position: start + 1}
 	depth := 1
 	for scanner.position < len(source) {
 		pos := scanner.position
+		if protected, ok := scanner.protected(); ok {
+			scanner.position = protected.end
+			continue
+		}
 		if source[pos] == open {
 			depth++
 			scanner.position++
@@ -32,11 +38,7 @@ func ReadGroupString(source string, start int, open, close byte) (string, int, b
 			scanner.position++
 			continue
 		}
-		if protected, ok := scanner.protected(); ok {
-			scanner.position = protected.end
-		} else {
-			scanner.position++
-		}
+		scanner.position++
 	}
 	return "", start, false
 }
@@ -50,9 +52,9 @@ func SplitTopLevelCSV(source string) []string {
 	scanner := NewCodeScanner(source, 0)
 	for pos, ok := scanner.Next(); ok; pos, ok = scanner.Next() {
 		switch source[pos] {
-		case '(', '{':
+		case '(', '{', '[':
 			depth++
-		case ')', '}':
+		case ')', '}', ']':
 			if depth > 0 {
 				depth--
 			}
