@@ -88,7 +88,7 @@ func stripCollateSelect(sel *query.Select) error {
 			return err
 		}
 		if withSel.X != nil {
-			withSel.Raw = "(" + Stringify(withSel.X) + ")"
+			withSel.Raw = "(" + (Stringifier{PreserveWindow: true}).String(withSel.X) + ")"
 		}
 	}
 	return nil
@@ -130,7 +130,7 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 		}
 		actual.X = stripped
 		if actual.X != nil {
-			actual.Raw = "(" + Stringify(actual.X) + ")"
+			actual.Raw = "(" + (Stringifier{PreserveWindow: true}).String(actual.X) + ")"
 		}
 		return actual, nil
 	case *expr.Unary:
@@ -159,7 +159,8 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 		if len(actual.Args) > 0 {
 			args := make([]string, 0, len(actual.Args))
 			for _, arg := range actual.Args {
-				args = append(args, Stringify(arg))
+				// Pagination inside a query argument determines its value.
+				args = append(args, (Stringifier{PreserveWindow: true}).String(arg))
 			}
 			actual.Raw = "(" + strings.Join(args, ", ") + ")"
 		}
@@ -217,7 +218,7 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 			c.Y = stripped
 		}
 		actual.Raw = ""
-		actual.Raw = Stringify(actual)
+		actual.Raw = (Stringifier{PreserveWindow: true}).String(actual)
 		return actual, nil
 	case []node.Node:
 		for i := range actual {
@@ -241,7 +242,7 @@ func stripCollateNode(n node.Node) (node.Node, error) {
 			if !rawParsedFaithfully(actual) {
 				return nil, fmt.Errorf("cannot strip COLLATE from raw subquery with opaque template fragments")
 			}
-			actual.Raw = "(" + Stringify(actual.X) + ")"
+			actual.Raw = "(" + (Stringifier{PreserveWindow: true}).String(actual.X) + ")"
 		}
 		return actual, nil
 	case *query.Select:

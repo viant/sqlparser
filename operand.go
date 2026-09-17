@@ -75,7 +75,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 	// OFFSET is also a pagination keyword, but OFFSET(...) in an operand
 	// position is a function (not a query clause).
 	if match.Code == windowTokenCode && strings.EqualFold(match.Text(cursor), "OFFSET") {
-		if call := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher); call.Code == parenthesesCode {
+		if call := matchCallParentheses(cursor); call.Code == parenthesesCode {
 			raw := call.Text(cursor)
 			args, err := parseCallArguments(cursor, "OFFSET", raw, pos)
 			if err != nil {
@@ -97,17 +97,16 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		}
 
 		pos := cursor.Pos
-		match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, exceptKeywordMatcher)
-		switch match.Code {
-		case parenthesesCode:
+		match = matchCallParentheses(cursor)
+		if match.Code == parenthesesCode {
 			raw := match.Text(cursor)
 			args, err := parseCallArguments(cursor, selRaw, raw, pos)
 			if err != nil {
 				return nil, err
 			}
 			return applyCollate(cursor, &expr.Call{X: selector, Raw: raw, Args: args})
-
-		case exceptKeyword:
+		}
+		if match = cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher); match.Code == exceptKeyword {
 			return parseStarExpr(cursor, selRaw, selector)
 		}
 		if strings.HasSuffix(selRaw, "*") {
@@ -248,10 +247,13 @@ func parseCallArguments(cursor *parsly.Cursor, name, raw string, pos int) ([]nod
 		}
 		argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
 		argCursor.OnError = cursor.OnError
-		// EXISTS takes a query, not a scalar argument list. Keep the query in
-		// the AST so traversal and grouped projection can preserve its scope.
-		if strings.EqualFold(name, "exists") {
-			queryNode, err := parseExistsQuery(argCursor)
+		if strings.EqualFold(name, "struct") {
+			return parseStructArguments(argCursor)
+		}
+		// Query arguments retain their own scope in the AST. ARRAY also has
+		// scalar forms in other dialects, so recognize its query form first.
+		if strings.EqualFold(name, "exists") || strings.EqualFold(name, "array") && startsQueryArgument(argCursor) {
+			queryNode, err := parseQueryArgument(argCursor)
 			if err != nil {
 				return nil, err
 			}
@@ -268,6 +270,19 @@ func parseCallArguments(cursor *parsly.Cursor, name, raw string, pos int) ([]nod
 	return args, nil
 }
 
+// Comments may separate a function name from its arguments. Leave the cursor
+// unchanged when there is no call so aliases and projection comments keep
+// their existing parsing owners.
+func matchCallParentheses(cursor *parsly.Cursor) *parsly.TokenMatch {
+	pos := cursor.Pos
+	skipExpressionSpace(cursor)
+	match := cursor.MatchOne(parenthesesMatcher)
+	if match.Code != parenthesesCode {
+		cursor.Pos = pos
+	}
+	return match
+}
+
 // ParseCallExpr parses call expression
 func ParseCallExpr(rawExpr string) (*expr.Call, error) {
 	if err := source.ValidateStructure(rawExpr); err != nil {
@@ -280,7 +295,7 @@ func ParseCallExpr(rawExpr string) (*expr.Call, error) {
 	}
 	selector := expr.NewSelector(match.Text(cursor))
 	pos := cursor.Pos
-	match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher)
+	match = matchCallParentheses(cursor)
 	if match.Code != parenthesesCode {
 		return nil, cursor.NewError(parenthesesMatcher)
 	}

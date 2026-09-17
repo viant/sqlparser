@@ -5,7 +5,25 @@ import (
 	"github.com/viant/sqlparser/query"
 )
 
-func parseExistsQuery(cursor *parsly.Cursor) (*query.Select, error) {
+func startsQueryArgument(cursor *parsly.Cursor) bool {
+	lookahead := *cursor
+	for {
+		skipExpressionSpace(&lookahead)
+		identifierSize := selectorMatcher.Match(&lookahead)
+		match := lookahead.MatchAny(selectKeywordMatcher, withKeywordMatcher, parenthesesMatcher)
+		switch match.Code {
+		case selectKeyword, withKeyword:
+			return match.Size == identifierSize || startsSQLComment(lookahead.Input, lookahead.Pos)
+		case parenthesesCode:
+			raw := match.Text(&lookahead)
+			lookahead = *parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), 0)
+		default:
+			return false
+		}
+	}
+}
+
+func parseQueryArgument(cursor *parsly.Cursor) (*query.Select, error) {
 	// Parentheses may enclose the query repeatedly, but each enclosure must
 	// contain the entire argument. The enclosing call retains its raw syntax.
 	for {
@@ -42,7 +60,7 @@ func parseExistsQuery(cursor *parsly.Cursor) (*query.Select, error) {
 }
 
 // The general query parser permits incomplete projections for legacy callers.
-// EXISTS requires a complete projection in its main query, CTEs and UNION arms.
+// Query arguments require complete projections in their main query, CTEs and UNION arms.
 func completeQueryProjections(q *query.Select) bool {
 	if q == nil || len(q.List) == 0 {
 		return false

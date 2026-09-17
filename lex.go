@@ -95,7 +95,16 @@ var starTokenMatcher = parsly.NewToken(starTokenCode, "*", matcher.NewByte('*'))
 var notOperatorMatcher = parsly.NewToken(notOperator, "NOT", matcher.NewKeyword("not", &option.Case{}))
 var nullMatcher = parsly.NewToken(nullTokenCode, "NULL", matcher.NewKeyword("null", &option.Case{}))
 var selectionKindMatcher = parsly.NewToken(selectionKindCode, "ALL|DISTINCT|STRUCT", selectionModifier{
-	keywords: matcher.NewSet([]string{"ALL", "DISTINCT", "STRUCT"}, &option.Case{}),
+	keywords:          matcher.NewSet([]string{"ALL", "DISTINCT", "STRUCT"}, &option.Case{}),
+	selector:          smatcher.NewSelector(false),
+	excludeStructCall: true,
+})
+var selectAsKeywordMatcher = parsly.NewToken(asKeyword, "AS", selectionModifier{
+	keywords: matcher.NewKeyword("AS", &option.Case{}),
+	selector: smatcher.NewSelector(false),
+})
+var selectStructKeywordMatcher = parsly.NewToken(selectionKindCode, "STRUCT", selectionModifier{
+	keywords: matcher.NewKeyword("STRUCT", &option.Case{}),
 	selector: smatcher.NewSelector(false),
 })
 var orderDirectionMatcher = parsly.NewToken(orderDirection, "ASC|DESC", matcher.NewSet([]string{

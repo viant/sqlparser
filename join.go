@@ -149,6 +149,11 @@ func parseDeleteJoin(cursor *parsly.Cursor, join *query.Join) (*parsly.TokenMatc
 func appendJoin(cursor *parsly.Cursor, match *parsly.TokenMatch, dest *query.Select, expectOn bool) error {
 	join := query.NewJoin(match.Text(cursor))
 	join.Span.Begin = uint32(match.Offset)
+	// CROSS JOIN has no required join condition. Normalize the matched
+	// whitespace and case while retaining the authored text for serialization.
+	if strings.EqualFold(strings.Join(strings.Fields(join.Raw), " "), "CROSS JOIN") {
+		expectOn = false
+	}
 
 	dest.Joins = append(dest.Joins, join)
 	if err := parseJoin(cursor, join, dest, expectOn); err != nil {

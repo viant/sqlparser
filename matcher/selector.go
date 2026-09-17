@@ -84,9 +84,15 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 		}
 
 		switch input[i] {
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_', '.', ':', '$', '/':
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_', '.', ':', '$':
 			matched++
 			continue
+		case '/':
+			// Leave comment delimiters for the parser's comment handling.
+			if i+1 < size && input[i+1] == '*' {
+				return matched
+			}
+			matched++
 		case '*':
 			if i > 0 && input[i-1] == '.' {
 				matched++
@@ -95,7 +101,7 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 			return matched
 
 		case '-':
-			if !n.isTable {
+			if !n.isTable || i+1 < size && input[i+1] == '-' {
 				return matched
 			}
 
