@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
+	smatcher "github.com/viant/sqlparser/matcher"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
 	"github.com/viant/sqlparser/source"
@@ -16,6 +17,22 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		return operand, err
 	}
 	for {
+		tail := *cursor
+		skipExpressionSpace(&tail)
+		if tail.Pos < len(tail.Input) && tail.Input[tail.Pos] == '.' {
+			cursor.Pos = tail.Pos + 1
+			skipExpressionSpace(cursor)
+			name, err := expectFieldName(cursor)
+			if err != nil {
+				return nil, err
+			}
+			operand = &expr.FieldAccess{X: operand, Name: name}
+			operand, err = applyCollate(cursor, operand)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
 		// A separated [name] is a bracket-quoted alias in supported SQL
 		// dialects. Only an adjacent bracket starts postfix element access.
 		if cursor.Pos >= len(cursor.Input) || cursor.Input[cursor.Pos] != '[' || cursor.Pos > 0 && source.IsWhitespace(cursor.Input[cursor.Pos-1]) {
@@ -36,14 +53,56 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Field selection on computed values has no native representation yet.
-		// Do not let the query parser accept only the prefix before the dot.
-		tail := *cursor
-		skipExpressionSpace(&tail)
-		if tail.Pos < len(tail.Input) && tail.Input[tail.Pos] == '.' {
-			return nil, fmt.Errorf("unsupported field access after subscript at byte %d", tail.Pos)
+	}
+}
+
+func expectFieldName(cursor *parsly.Cursor) (string, error) {
+	start := cursor.Pos
+	if start < len(cursor.Input) {
+		first := cursor.Input[start]
+		if first == '`' || first == '"' || first == '[' {
+			end := first
+			if first == '[' {
+				end = ']'
+			}
+			cursor.Pos++
+			for cursor.Pos < len(cursor.Input) {
+				c := cursor.Input[cursor.Pos]
+				cursor.Pos++
+				// Backslash escapes quoted text, but is literal in bracketed
+				// identifiers, matching the source scanner's quote handling.
+				if c == '\\' && end != ']' {
+					if cursor.Pos == len(cursor.Input) {
+						break
+					}
+					cursor.Pos++
+					continue
+				}
+				if c != end {
+					continue
+				}
+				if cursor.Pos < len(cursor.Input) && cursor.Input[cursor.Pos] == end {
+					cursor.Pos++
+					continue
+				}
+				if cursor.Pos > start+2 {
+					return string(cursor.Input[start:cursor.Pos]), nil
+				}
+				break
+			}
+		} else if smatcher.IsLetter(first) || first == '_' {
+			cursor.Pos++
+			for cursor.Pos < len(cursor.Input) {
+				c := cursor.Input[cursor.Pos]
+				if !smatcher.IsLetter(c) && c != '_' && !(c >= '0' && c <= '9') {
+					break
+				}
+				cursor.Pos++
+			}
+			return string(cursor.Input[start:cursor.Pos]), nil
 		}
 	}
+	return "", fmt.Errorf("expected field name at byte %d", start)
 }
 
 func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {

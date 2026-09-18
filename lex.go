@@ -85,6 +85,8 @@ const (
 	intervalKeyword
 	intervalUnit
 	limitKeyword
+	nullTreatmentKeyword
+	nullsKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -119,6 +121,9 @@ var endKeywordMatcher = parsly.NewToken(endKeyword, "END", matcher.NewKeyword("e
 var intervalKeywordMatcher = parsly.NewToken(intervalKeyword, "INTERVAL", matcher.NewKeyword("interval", &option.Case{}))
 var intervalUnitMatcher = parsly.NewToken(intervalUnit, "interval unit", matcher.NewSet([]string{"microsecond", "millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year", "year_month", "day_hour", "day_minute", "day_second", "hour_minute", "hour_second", "minute_second", "day_microsecond", "hour_microsecond", "minute_microsecond", "second_microsecond"}, &option.Case{}))
 var limitKeywordMatcher = parsly.NewToken(limitKeyword, "LIMIT", matcher.NewKeyword("limit", &option.Case{}))
+var ignoreKeywordMatcher = parsly.NewToken(nullTreatmentKeyword, "IGNORE", matcher.NewKeyword("ignore", &option.Case{}))
+var respectKeywordMatcher = parsly.NewToken(nullTreatmentKeyword, "RESPECT", matcher.NewKeyword("respect", &option.Case{}))
+var nullsKeywordMatcher = parsly.NewToken(nullsKeyword, "NULLS", matcher.NewKeyword("nulls", &option.Case{}))
 var commentBlockMatcher = parsly.NewToken(commentBlock, "/* */", matcher.NewSeqBlock("/*", "*/"))
 var inlineCommentMatcher = parsly.NewToken(commentBlock, "--", matcher.NewSeqBlock("--", "\n"))
 

@@ -153,14 +153,20 @@ func TestSubscriptPreservesBracketAlias(t *testing.T) {
 	require.IsType(t, &expr.Ident{}, q.List[0].Expr)
 }
 
-func TestSubscriptRejectsFieldSuffix(t *testing.T) {
+func TestSubscriptFieldSuffix(t *testing.T) {
 	for _, expression := range []string{
 		"a[SAFE_OFFSET(0)].field", "a[0] .field", "a[0] /* comment */ .field",
 		"a[0][1].field", "a[b[0].field]", "COALESCE(a[0].field, 0)",
+		"(a[0]).field", "((a[0])).field", "(a[0]) /* comment */ .field",
+		"a[0].field[1].nested", "a[0].`field`", "a[0]._field",
 	} {
 		t.Run(expression, func(t *testing.T) {
-			_, err := ParseQuery("SELECT " + expression + " AS value FROM src WHERE id = 1")
-			require.ErrorContains(t, err, "unsupported field access after subscript")
+			q, err := ParseQuery("SELECT " + expression + " AS value FROM src WHERE id = 1")
+			require.NoError(t, err)
+			require.Equal(t, "value", q.List[0].Alias)
+			require.NotNil(t, q.Qualify)
+			_, err = ParseQuery(Stringify(q), WithStructuralValidation())
+			require.NoError(t, err)
 		})
 	}
 }
@@ -194,7 +200,7 @@ func TestSubscriptStructuralValidation(t *testing.T) {
 
 func TestSubscriptProjectionSuffixBoundary(t *testing.T) {
 	for _, expression := range []string{
-		"(a[0]).field", "((a[0])).field", "(a[0]) /* comment */ .field",
+		"a[0]..field", "a[0].1field", "a[0].`field", "a[0].field()",
 		"a[0]::text", "(a[0])::text", "COALESCE(a[0], 0)::text",
 		"a[0]]", "a[0] + 1::text",
 	} {

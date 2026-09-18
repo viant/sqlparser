@@ -113,6 +113,10 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 	case *expr.Subscript:
 		traverse(actual.X, visitor)
 		traverse(actual.Index, visitor)
+	case *expr.FieldAccess:
+		return traverse(actual.X, visitor)
+	case *expr.NullTreatment:
+		return traverse(actual.X, visitor)
 	case *expr.Range:
 		traverse(actual.Min, visitor)
 		traverse(actual.Max, visitor)

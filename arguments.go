@@ -5,6 +5,7 @@ import (
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
+	"strings"
 )
 
 func skipExpressionSpace(cursor *parsly.Cursor) {
@@ -67,6 +68,17 @@ func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) er
 		item := query.NewItem(operand)
 		list.Append(item)
 		skipExpressionSpace(cursor)
+		if !ordered {
+			if match := cursor.MatchAfterOptional(whitespaceMatcher, ignoreKeywordMatcher, respectKeywordMatcher); match.Code == nullTreatmentKeyword {
+				mode := strings.ToUpper(match.Text(cursor))
+				skipExpressionSpace(cursor)
+				if cursor.MatchOne(nullsKeywordMatcher).Code != nullsKeyword {
+					return cursor.NewError(nullsKeywordMatcher)
+				}
+				item.Expr = &expr.NullTreatment{X: item.Expr, Mode: mode}
+				skipExpressionSpace(cursor)
+			}
+		}
 		if ordered {
 			if match := cursor.MatchOne(orderDirectionMatcher); match.Code == orderDirection {
 				item.Direction = match.Text(cursor)
