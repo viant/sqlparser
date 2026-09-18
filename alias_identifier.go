@@ -34,7 +34,7 @@ func discoverAlias(cursor *parsly.Cursor) (string, error) {
 	identifier := aliasIdentifier{}
 	explicit := false
 	for {
-		match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, asKeywordMatcher, onKeywordMatcher, fromKeywordMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher, aliasIdentifierMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, exceptKeywordMatcher, asKeywordMatcher, onKeywordMatcher, fromKeywordMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher, notLikeOperatorMatcher, aliasIdentifierMatcher)
 		// Clause matchers can match a keyword prefix (for example FROM in
 		// from_records). Only a whole token can terminate alias discovery.
 		if match.Size > 0 && match.Code != identifierCode && cursor.Pos < len(cursor.Input) {
@@ -58,7 +58,7 @@ func discoverAlias(cursor *parsly.Cursor) (string, error) {
 				return "", cursor.NewError(aliasIdentifierMatcher)
 			}
 			return alias, nil
-		case exceptKeyword, fromKeyword, onKeyword, orderByKeyword, joinToken, whereKeyword, groupByKeyword, havingKeyword, windowTokenCode, unionKeyword:
+		case exceptKeyword, fromKeyword, onKeyword, orderByKeyword, joinToken, whereKeyword, groupByKeyword, havingKeyword, windowTokenCode, unionKeyword, notLikeOperator:
 			cursor.Pos = match.Offset
 		default:
 			if cursor.Pos < len(cursor.Input) {

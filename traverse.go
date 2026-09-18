@@ -108,6 +108,13 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 		for _, arg := range actual.Args {
 			traverse(arg, visitor)
 		}
+	case *expr.Switch:
+		for _, branch := range actual.Cases {
+			traverse(branch, visitor)
+		}
+	case *expr.Case:
+		traverse(actual.X.X, visitor)
+		traverse(actual.Y, visitor)
 	case *expr.Collate:
 		traverse(actual.X, visitor)
 	case *expr.Subscript:

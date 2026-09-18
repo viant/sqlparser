@@ -88,6 +88,7 @@ const (
 	nullTreatmentKeyword
 	nullsKeyword
 	separatorKeyword
+	notLikeOperator
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -190,6 +191,7 @@ var insertIntoKeywordMatcher = parsly.NewToken(insertIntoKeyword, "INSERT INTO",
 var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", matcher.NewKeyword("values", &option.Case{}))
 
 var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "&", "^", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
+var notLikeOperatorMatcher = parsly.NewToken(notLikeOperator, "NOT LIKE", keywordSequence{"NOT", "LIKE"})
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", selectionModifier{

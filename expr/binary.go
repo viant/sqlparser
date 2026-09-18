@@ -40,7 +40,7 @@ func binaryPrecedence(op string) int {
 		return 1
 	case "AND":
 		return 2
-	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "BETWEEN":
+	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "BETWEEN":
 		return 3
 	case "|":
 		return 4
