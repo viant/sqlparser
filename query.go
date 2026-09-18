@@ -100,9 +100,19 @@ beginMatch:
 		if asStruct && !completeQueryProjections(dest) {
 			return cursor.NewError(exprMatcher)
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 		pos := cursor.Pos
 		switch match.Code {
+		case whereKeyword, groupByKeyword, havingKeyword, orderByKeyword, windowTokenCode, unionKeyword:
+			// FROM is optional for constant projections. Their remaining
+			// clauses and UNION branches still belong to the statement AST.
+			handled, err := matchPostFrom(cursor, dest, match)
+			if err != nil {
+				return err
+			}
+			if !handled {
+				return cursor.NewError(unionMatcher, orderByKeywordMatcher, windowMatcher)
+			}
 		case fromKeyword:
 			dest.From = query.From{}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher, parenthesesMatcher)
@@ -264,6 +274,9 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 		}
 		dest.Union = union
 		err := parseQuery(cursor, union.X)
+		if err == nil && !completeQueryProjections(union.X) {
+			return false, cursor.NewError(selectKeywordMatcher, exprMatcher)
+		}
 		return err == nil, err
 	case windowTokenCode:
 		matchedText := match.Text(cursor)

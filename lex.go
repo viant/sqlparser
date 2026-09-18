@@ -175,7 +175,10 @@ var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", m
 var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "&", "^", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
-var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", matcher.NewSet([]string{"and", "or"}, &option.Case{}))
+var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", selectionModifier{
+	keywords: matcher.NewSet([]string{"and", "or"}, &option.Case{}),
+	selector: smatcher.NewSelector(false),
+})
 var rangeOperatorMatcher = parsly.NewToken(rangeOperator, ".. AND .. ", matcher.NewSet([]string{"and"}, &option.Case{}))
 
 var nullKeywordMatcher = parsly.NewToken(nullKeyword, "NULL", matcher.NewKeyword("null", &option.Case{}))
