@@ -238,7 +238,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 			return applyCollate(cursor, result)
 		}
 		var list query.List
-		if err := parseCallArgs(exprCursor, &list); err != nil {
+		if err := parseArgumentList(exprCursor, &list, false, false); err != nil {
 			return nil, err
 		}
 		if len(list) == 0 {

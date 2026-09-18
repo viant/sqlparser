@@ -47,12 +47,63 @@ func completeExpression(n node.Node) bool {
 	return true
 }
 
-func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) error {
+// matchArgumentName recognizes => only at a function argument boundary. Argument
+// names are syntax, not column references; their values remain ordinary expressions.
+func matchArgumentName(cursor *parsly.Cursor) string {
+	skipExpressionSpace(cursor)
+	pos := cursor.Pos
+	match := cursor.MatchOne(aliasIdentifierMatcher)
+	if match.Code == identifierCode {
+		name := match.Text(cursor)
+		skipExpressionSpace(cursor)
+		if strings.HasPrefix(string(cursor.Input[cursor.Pos:]), "=>") {
+			cursor.Pos += 2
+			return name
+		}
+	}
+	cursor.Pos = pos
+	return ""
+}
+
+func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered, allowNamed bool) error {
 	skipExpressionSpace(cursor)
 	if cursor.Pos == len(cursor.Input) && !ordered {
 		return nil
 	}
+	var names map[string]bool
 	for {
+		if allowNamed {
+			if name := matchArgumentName(cursor); name != "" {
+				parts, err := TableIdentifierParts(name)
+				if err != nil {
+					return err
+				}
+				key := strings.ToLower(parts[0])
+				if names[key] {
+					return fmt.Errorf("duplicate named argument: %s", name)
+				}
+				if names == nil {
+					names = make(map[string]bool)
+				}
+				names[key] = true
+				value, err := expectExpression(cursor)
+				if err != nil {
+					return err
+				}
+				list.Append(query.NewItem(&expr.Binary{X: &expr.Raw{Raw: name}, Op: "=>", Y: value}))
+				skipExpressionSpace(cursor)
+				if cursor.Pos == len(cursor.Input) {
+					return nil
+				}
+				if cursor.MatchOne(nextMatcher).Code != nextCode {
+					return cursor.NewError(nextMatcher)
+				}
+				continue
+			}
+			if len(names) != 0 {
+				return fmt.Errorf("expected named argument at byte %d", cursor.Pos)
+			}
+		}
 		modifier := ""
 		if len(*list) == 0 && !ordered {
 			if match := cursor.MatchOne(selectionKindMatcher); match.Code == selectionKindCode {
@@ -94,7 +145,7 @@ func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) er
 		} else if match := cursor.MatchOne(orderByKeywordMatcher); match.Code == orderByKeyword {
 			op := match.Text(cursor)
 			var ordering query.List
-			if err := parseArgumentList(cursor, &ordering, true); err != nil {
+			if err := parseArgumentList(cursor, &ordering, true, false); err != nil {
 				return err
 			}
 			item.Expr = &expr.Binary{X: item.Expr, Op: op, Y: ordering}

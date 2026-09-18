@@ -113,7 +113,7 @@ func selectListBoundary(cursor *parsly.Cursor, item *query.Item, aliasSyntax []b
 }
 
 func parseCallArgs(cursor *parsly.Cursor, list *query.List) error {
-	return parseArgumentList(cursor, list, false)
+	return parseArgumentList(cursor, list, false, true)
 }
 
 func parseOrderByListItem(cursor *parsly.Cursor, list *query.List) error {
