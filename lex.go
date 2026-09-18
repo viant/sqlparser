@@ -114,11 +114,28 @@ var selectStructKeywordMatcher = parsly.NewToken(selectionKindCode, "STRUCT", se
 var orderDirectionMatcher = parsly.NewToken(orderDirection, "ASC|DESC", matcher.NewSet([]string{
 	"ASC", "DESC",
 }, &option.Case{}))
-var caseBlockMatcher = parsly.NewToken(caseBlock, "CASE", matcher.NewKeyword("case", &option.Case{}))
-var whenKeywordMatcher = parsly.NewToken(whenKeyword, "WHEN", matcher.NewKeyword("when", &option.Case{}))
-var thenKeywordMatcher = parsly.NewToken(thenKeyword, "THEN", matcher.NewKeyword("then", &option.Case{}))
-var elseKeywordMatcher = parsly.NewToken(elseKeyword, "ELSE", matcher.NewKeyword("else", &option.Case{}))
-var endKeywordMatcher = parsly.NewToken(endKeyword, "END", matcher.NewKeyword("end", &option.Case{}))
+
+// CASE delimiters must not consume identifier prefixes such as end_date.
+var caseBlockMatcher = parsly.NewToken(caseBlock, "CASE", selectionModifier{
+	keywords: matcher.NewKeyword("case", &option.Case{}),
+	selector: aliasIdentifier{},
+})
+var whenKeywordMatcher = parsly.NewToken(whenKeyword, "WHEN", selectionModifier{
+	keywords: matcher.NewKeyword("when", &option.Case{}),
+	selector: aliasIdentifier{},
+})
+var thenKeywordMatcher = parsly.NewToken(thenKeyword, "THEN", selectionModifier{
+	keywords: matcher.NewKeyword("then", &option.Case{}),
+	selector: aliasIdentifier{},
+})
+var elseKeywordMatcher = parsly.NewToken(elseKeyword, "ELSE", selectionModifier{
+	keywords: matcher.NewKeyword("else", &option.Case{}),
+	selector: aliasIdentifier{},
+})
+var endKeywordMatcher = parsly.NewToken(endKeyword, "END", selectionModifier{
+	keywords: matcher.NewKeyword("end", &option.Case{}),
+	selector: aliasIdentifier{},
+})
 var intervalKeywordMatcher = parsly.NewToken(intervalKeyword, "INTERVAL", matcher.NewKeyword("interval", &option.Case{}))
 var intervalUnitMatcher = parsly.NewToken(intervalUnit, "interval unit", matcher.NewSet([]string{"microsecond", "millisecond", "second", "minute", "hour", "day", "week", "month", "quarter", "year", "year_month", "day_hour", "day_minute", "day_second", "hour_minute", "hour_second", "minute_second", "day_microsecond", "hour_microsecond", "minute_microsecond", "second_microsecond"}, &option.Case{}))
 var limitKeywordMatcher = parsly.NewToken(limitKeyword, "LIMIT", matcher.NewKeyword("limit", &option.Case{}))
