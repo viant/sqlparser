@@ -1,6 +1,7 @@
 package sqlparser
 
 import (
+	"fmt"
 	"github.com/viant/parsly"
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/node"
@@ -67,6 +68,7 @@ func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) er
 		}
 		item := query.NewItem(operand)
 		list.Append(item)
+		hasSeparator := false
 		skipExpressionSpace(cursor)
 		if !ordered {
 			if match := cursor.MatchAfterOptional(whitespaceMatcher, ignoreKeywordMatcher, respectKeywordMatcher); match.Code == nullTreatmentKeyword {
@@ -85,7 +87,7 @@ func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) er
 			}
 			skipExpressionSpace(cursor)
 			pos := cursor.Pos
-			if cursor.MatchOne(limitKeywordMatcher).Code == limitKeyword {
+			if match := cursor.MatchAny(limitKeywordMatcher, separatorKeywordMatcher); match.Code == limitKeyword || match.Code == separatorKeyword {
 				cursor.Pos = pos
 				return nil
 			}
@@ -99,6 +101,20 @@ func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) er
 		}
 		if !ordered {
 			skipExpressionSpace(cursor)
+			if match := cursor.MatchOne(separatorKeywordMatcher); match.Code == separatorKeyword {
+				op := match.Text(cursor)
+				skipExpressionSpace(cursor)
+				separator, err := TryParseLiteral(cursor)
+				if err != nil {
+					return err
+				}
+				if separator == nil || separator.Kind != "string" {
+					return cursor.NewError(singleQuotedStringLiteralMatcher, doubleQuotedStringLiteralMatcher)
+				}
+				item.Expr = &expr.Binary{X: item.Expr, Op: op, Y: separator}
+				hasSeparator = true
+				skipExpressionSpace(cursor)
+			}
 			if match := cursor.MatchOne(limitKeywordMatcher); match.Code == limitKeyword {
 				op := match.Text(cursor)
 				limit, err := expectExpression(cursor)
@@ -111,6 +127,9 @@ func parseArgumentList(cursor *parsly.Cursor, list *query.List, ordered bool) er
 		skipExpressionSpace(cursor)
 		if cursor.Pos == len(cursor.Input) {
 			return nil
+		}
+		if hasSeparator {
+			return fmt.Errorf("unexpected input after aggregate SEPARATOR at byte %d", cursor.Pos)
 		}
 		if cursor.MatchOne(nextMatcher).Code != nextCode {
 			return cursor.NewError(nextMatcher)
