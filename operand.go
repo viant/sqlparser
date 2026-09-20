@@ -303,9 +303,12 @@ func parseCallArguments(cursor *parsly.Cursor, name, raw string, pos int) ([]nod
 		if strings.EqualFold(name, "extract") {
 			return parseExtractArguments(cursor, raw, pos)
 		}
-		if strings.EqualFold(name, "cast") {
+		if strings.EqualFold(name, "cast") || strings.EqualFold(name, "safe_cast") {
 			if index := source.FindTopLevelKeyword(raw[1:len(raw)-1], "AS", 0); index >= 0 {
 				return parseCastArguments(cursor, raw, pos, index)
+			}
+			if strings.EqualFold(name, "safe_cast") {
+				return nil, fmt.Errorf("SAFE_CAST requires operand AS type")
 			}
 		}
 		argCursor := parsly.NewCursor(cursor.Path, []byte(raw[1:len(raw)-1]), pos)
