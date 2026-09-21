@@ -82,3 +82,26 @@ func TestSelectorCommentBoundaries(t *testing.T) {
 		})
 	}
 }
+
+func TestSelectorQuotedSegments(t *testing.T) {
+	for _, tc := range []struct{ input, token string }{
+		{"t.`category` AS category", "t.`category`"},
+		{"`t`.`category` alias", "`t`.`category`"},
+		{"`t`.category alias", "`t`.category"},
+		{"db.`t`.`category`", "db.`t`.`category`"},
+		{"t.`category.name` `alias`", "t.`category.name`"},
+		{"t.`category``name` rest", "t.`category``name`"},
+		{"t.`category\\`name` rest", "t.`category\\`name`"},
+		{"t.`category[name]`[0]", "t.`category[name]`"},
+		{"t.column `alias`", "t.column"},
+		{"t.`category`/*comment*/", "t.`category`"},
+	} {
+		for _, table := range []bool{false, true} {
+			cursor := parsly.NewCursor("", []byte("  "+tc.input), 0)
+			cursor.Pos = 2
+			size := NewSelector(table).Match(cursor)
+			assert.Equal(t, tc.token, string(cursor.Input[2:2+size]), tc.input)
+			assert.Equal(t, 2, cursor.Pos)
+		}
+	}
+}

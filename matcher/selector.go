@@ -55,14 +55,13 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 		}
 		return 0
 	} else if input[pos] == '`' {
-		pos++
-		matched++
-		for i := pos; i < size; i++ {
-			pos++
-			matched++
-			if input[i] == '`' {
-				return
-			}
+		matched = (&stringMatcher{quote: '`'}).Match(cursor)
+		if matched == 0 {
+			return 0
+		}
+		pos += matched
+		if pos == size || input[pos] != '.' {
+			return matched
 		}
 	} else {
 		return 0
@@ -84,6 +83,25 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 		}
 
 		switch input[i] {
+		case '`':
+			// A quoted segment after a dot belongs to this selector. A
+			// separated quoted name is left for alias parsing.
+			if i == cursor.Pos || input[i-1] != '.' {
+				return matched
+			}
+			quoted := *cursor
+			quoted.Pos = i
+			length := (&stringMatcher{quote: '`'}).Match(&quoted)
+			if length == 0 {
+				// Leave the dot for postfix parsing to report the malformed
+				// field instead of dropping the complete SELECT expression.
+				return matched - 1
+			}
+			matched += length
+			i += length - 1
+			if i+1 == size || input[i+1] != '.' {
+				return matched
+			}
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_', '.', ':', '$':
 			matched++
 			continue
