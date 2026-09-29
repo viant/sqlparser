@@ -129,6 +129,14 @@ func protectedAt(text string, i int, subscript bool) (region, bool) {
 	if i >= len(text) {
 		return region{}, false
 	}
+	// Most SQL bytes cannot begin a protected region. Avoid running comment
+	// prefix and quote checks for every ordinary identifier or expression byte.
+	quote := text[i]
+	switch quote {
+	case '-', '/', '\'', '"', '`', '[', '$':
+	default:
+		return region{}, false
+	}
 	result := region{start: i, end: len(text)}
 	if strings.HasPrefix(text[i:], "--") {
 		result.kind = "line comment"
@@ -157,7 +165,6 @@ func protectedAt(text string, i int, subscript bool) (region, bool) {
 		}
 		return result, true
 	}
-	quote := text[i]
 	if quote == '[' && subscript {
 		return region{}, false
 	}
