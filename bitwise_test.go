@@ -89,7 +89,7 @@ func TestBitwiseGroupedPredicates(t *testing.T) {
 }
 
 func TestBitwiseRejectsMissingOperands(t *testing.T) {
-	for _, expression := range []string{"a &", "a |", "a ^", "a <<", "a >>", "~", "a & & b", "a <<< b", "a >> > b", "a || b", "a +", "a ="} {
+	for _, expression := range []string{"a &", "a |", "a ^", "a <<", "a >>", "~", "a & & b", "a <<< b", "a >> > b", "a ||| b", "a +", "a ="} {
 		for _, context := range []string{
 			"SELECT BIT_COUNT(%s) FROM records",
 			"SELECT %s",

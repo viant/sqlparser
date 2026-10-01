@@ -126,10 +126,13 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		starTokenMatcher,
 		notOperatorMatcher,
 		bitwiseNotMatcher,
+		unaryMinusMatcher,
+		unaryPlusMatcher,
 		nullMatcher,
 		placeholderMatcher,
 		selectorMatcher,
 		commentBlockMatcher,
+		binaryOperatorMatcher,
 	)
 	pos := cursor.Pos
 	// OFFSET is also a pagination keyword, but OFFSET(...) in an operand
@@ -147,6 +150,8 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 	}
 
 	switch match.Code {
+	case binaryOperator:
+		return nil, cursor.NewError(exprMatcher)
 	case selectorTokenCode, placeholderTokenCode:
 
 		selRaw := match.Text(cursor)

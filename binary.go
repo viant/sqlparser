@@ -29,11 +29,15 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
 	skipExpressionSpace(cursor)
 	pos := cursor.Pos
 	if binary.Op == "" {
-		match := cursor.MatchAfterOptional(whitespaceMatcher, betweenKeywordMatcher, notLikeOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, placeholderMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, betweenKeywordMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, placeholderMatcher)
 		switch match.Code {
 		case notLikeOperator:
 			// Keep precedence independent of comments or whitespace between words.
 			binary.Op = "NOT LIKE"
+		case globOperator:
+			binary.Op = "GLOB"
+		case notGlobOperator:
+			binary.Op = "NOT GLOB"
 		case logicalOperator:
 			if cursor.Pos < len(cursor.Input) && !matcher.IsWhiteSpace(cursor.Input[cursor.Pos]) {
 				cursor.Pos = pos

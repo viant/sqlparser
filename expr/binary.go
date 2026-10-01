@@ -40,20 +40,24 @@ func binaryPrecedence(op string) int {
 		return 1
 	case "AND":
 		return 2
-	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "BETWEEN":
+	case "GLOB", "NOT GLOB":
 		return 3
-	case "|":
+	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "BETWEEN":
 		return 4
-	case "^":
+	case "|":
 		return 5
-	case "&":
+	case "^":
 		return 6
-	case "<<", ">>":
+	case "&":
 		return 7
-	case "+", "-":
+	case "<<", ">>":
 		return 8
-	case "*", "/":
+	case "+", "-":
 		return 9
+	case "*", "/":
+		return 10
+	case "||":
+		return 11
 	default:
 		return 0
 	}
@@ -65,7 +69,7 @@ func leftAssociativeValueOperator(left, right string) bool {
 		return false
 	}
 	switch leftPrecedence {
-	case 4, 5, 6, 7, 8, 9:
+	case 3, 5, 6, 7, 8, 9, 10, 11:
 		return true
 	default:
 		return false
