@@ -78,7 +78,7 @@ func parseJoinTarget(cursor *parsly.Cursor, join *query.Join) error {
 		return nil
 	}
 	cursor.Pos = pos
-	operand, err := expectOperand(cursor)
+	operand, err := expectOperandWithMatcher(cursor, tableOperandMatcher)
 	if err != nil {
 		return err
 	}

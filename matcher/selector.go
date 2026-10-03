@@ -7,6 +7,7 @@ import (
 type selector struct {
 	isTable         bool
 	bracedTableOnly bool
+	stopAtSubscript bool
 }
 
 // Match matches a string
@@ -125,7 +126,7 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 
 			matched++
 		case '[':
-			if !n.isTable {
+			if !n.isTable || n.stopAtSubscript {
 				return matched
 			}
 			matched++
@@ -146,6 +147,12 @@ func NewSelector(allowDashes bool) parsly.Matcher {
 	return &selector{
 		isTable: allowDashes,
 	}
+}
+
+// NewTableOperandSelector matches table paths, leaving adjacent subscripts for
+// the expression parser rather than absorbing them into the table name.
+func NewTableOperandSelector() parsly.Matcher {
+	return &selector{isTable: true, stopAtSubscript: true}
 }
 
 // NewBracedTableSelector recognizes a qualified table rooted in ${name}.

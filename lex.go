@@ -221,6 +221,7 @@ var aliasIdentifierMatcher = parsly.NewToken(identifierCode, "ALIAS", aliasIdent
 var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIdentifier())
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector(false))
 var tableMatcher = parsly.NewToken(tableTokenCode, "TABLE MATCHER", smatcher.NewSelector(true))
+var tableOperandMatcher = parsly.NewToken(tableTokenCode, "TABLE OPERAND", smatcher.NewTableOperandSelector())
 var bracedTableMatcher = parsly.NewToken(tableTokenCode, "BRACED TABLE", smatcher.NewBracedTableSelector())
 
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())

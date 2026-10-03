@@ -12,7 +12,13 @@ import (
 )
 
 func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
-	operand, err := expectOperandBase(cursor)
+	return expectOperandWithMatcher(cursor, selectorMatcher)
+}
+
+// Relation targets use tableOperandMatcher for their name; nested expressions still
+// use expectOperand so a dash in an argument remains a subtraction operator.
+func expectOperandWithMatcher(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.Node, error) {
+	operand, err := expectOperandBase(cursor, nameMatcher)
 	if err != nil || operand == nil {
 		return operand, err
 	}
@@ -105,7 +111,7 @@ func expectFieldName(cursor *parsly.Cursor) (string, error) {
 	return "", fmt.Errorf("expected field name at byte %d", start)
 }
 
-func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
+func expectOperandBase(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.Node, error) {
 	literal, err := TryParseLiteral(cursor)
 	if literal != nil || err != nil {
 		if err != nil {
@@ -130,7 +136,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		unaryPlusMatcher,
 		nullMatcher,
 		placeholderMatcher,
-		selectorMatcher,
+		nameMatcher,
 		commentBlockMatcher,
 		binaryOperatorMatcher,
 	)
@@ -152,7 +158,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 	switch match.Code {
 	case binaryOperator:
 		return nil, cursor.NewError(exprMatcher)
-	case selectorTokenCode, placeholderTokenCode:
+	case selectorTokenCode, tableTokenCode, placeholderTokenCode:
 
 		selRaw := match.Text(cursor)
 		var selector node.Node
