@@ -2,6 +2,8 @@ package sqlparser
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/viant/sqlparser/column"
 	del "github.com/viant/sqlparser/delete"
 	"github.com/viant/sqlparser/expr"
@@ -19,6 +21,11 @@ func Traverse(n node.Node, visitor func(n node.Node) bool) {
 
 func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 	if n == nil {
+		return false
+	}
+	// Optional AST children can be nil pointers inside a non-nil node interface.
+	value := reflect.ValueOf(n)
+	if value.Kind() == reflect.Ptr && value.IsNil() {
 		return false
 	}
 
