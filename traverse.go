@@ -35,6 +35,9 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 	switch actual := n.(type) {
 	case string:
 	case *query.Select:
+		for _, with := range actual.WithSelects {
+			traverse(with, visitor)
+		}
 		traverse(actual.List, visitor)
 		traverse(&actual.From, visitor)
 
@@ -55,6 +58,7 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 			traverse(actual.Having, visitor)
 		}
 
+		traverse(actual.QualifyClause, visitor)
 		if len(actual.OrderBy) > 0 {
 			for _, item := range actual.OrderBy {
 				traverse(item, visitor)
@@ -64,6 +68,8 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 			traverse(union.X, visitor)
 		}
 
+	case *query.WithSelect:
+		traverse(actual.X, visitor)
 	case *query.Join:
 		traverse(actual.With, visitor)
 		traverse(actual.On, visitor)
@@ -83,7 +89,11 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 	case *expr.Star:
 		traverse(actual.X, visitor)
 	case *expr.Raw:
-		traverse(actual.Raw, visitor)
+		if actual.X != nil {
+			traverse(actual.X, visitor)
+		} else {
+			traverse(actual.Raw, visitor)
+		}
 	case *query.From:
 		if actual.X == nil {
 			return true
@@ -122,6 +132,26 @@ func traverse(n node.Node, visitor func(n node.Node) bool) bool {
 	case *expr.Case:
 		traverse(actual.X.X, visitor)
 		traverse(actual.Y, visitor)
+	case *expr.Window:
+		traverse(actual.X, visitor)
+		for _, item := range actual.PartitionBy {
+			traverse(item, visitor)
+		}
+		for _, item := range actual.OrderBy {
+			traverse(item, visitor)
+		}
+		traverse(actual.Frame, visitor)
+	case *expr.WindowOrder:
+		traverse(actual.X, visitor)
+	case *expr.WindowFrame:
+		traverse(actual.Start, visitor)
+		traverse(actual.End, visitor)
+	case *expr.WindowBound:
+		traverse(actual.X, visitor)
+	case []node.Node:
+		for _, item := range actual {
+			traverse(item, visitor)
+		}
 	case *expr.Collate:
 		traverse(actual.X, visitor)
 	case *expr.Subscript:

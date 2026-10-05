@@ -23,6 +23,20 @@ func expectOperandWithMatcher(cursor *parsly.Cursor, nameMatcher *parsly.Token) 
 		return operand, err
 	}
 	for {
+		if matchWindowKeyword(cursor, "OVER") {
+			if _, ok := operand.(*expr.Call); !ok {
+				return nil, fmt.Errorf("OVER requires a function call")
+			}
+			operand, err = parseWindowExpression(cursor, operand)
+			if err != nil {
+				return nil, err
+			}
+			operand, err = applyCollate(cursor, operand)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
 		tail := *cursor
 		skipExpressionSpace(&tail)
 		if tail.Pos < len(tail.Input) && tail.Input[tail.Pos] == '.' {
@@ -126,7 +140,7 @@ func expectOperandBase(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.N
 		orderByKeywordMatcher,
 		asKeywordMatcher,
 		exceptKeywordMatcher,
-		onKeywordMatcher, fromKeywordMatcher, whereKeywordMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, windowMatcher, nextMatcher,
+		onKeywordMatcher, fromKeywordMatcher, whereKeywordMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, windowMatcher, nextMatcher,
 		parenthesesMatcher,
 		caseBlockMatcher,
 		starTokenMatcher,
@@ -273,7 +287,7 @@ func expectOperandBase(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.N
 		return applyCollate(cursor, unary)
 	case commentBlock:
 		return expectOperand(cursor)
-	case whenKeyword, thenKeyword, elseKeyword, endKeyword, asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
+	case whenKeyword, thenKeyword, elseKeyword, endKeyword, asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, qualifyKeyword, windowTokenCode, nextCode:
 		cursor.Pos = pos - match.Size
 	}
 	if match.Code == parsly.Invalid && cursor.OnError != nil {

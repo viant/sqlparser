@@ -96,6 +96,11 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 			s.append(actual.Having, builder)
 		}
 
+		if actual.QualifyClause != nil {
+			builder.WriteString(" QUALIFY ")
+			s.append(actual.QualifyClause.X, builder)
+		}
+
 		if len(actual.OrderBy) > 0 {
 			builder.WriteString(" ORDER BY ")
 			for i, item := range actual.OrderBy {
@@ -177,6 +182,58 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 		builder.WriteString(actual.Raw)
 		builder.WriteString(" ")
 		builder.WriteString(actual.Unparsed)
+	case *expr.Window:
+		s.append(actual.X, builder)
+		builder.WriteString(" OVER (")
+		if len(actual.PartitionBy) > 0 {
+			builder.WriteString("PARTITION BY ")
+			for i, item := range actual.PartitionBy {
+				if i > 0 {
+					builder.WriteString(", ")
+				}
+				s.append(item, builder)
+			}
+		}
+		if len(actual.OrderBy) > 0 {
+			if len(actual.PartitionBy) > 0 {
+				builder.WriteByte(' ')
+			}
+			builder.WriteString("ORDER BY ")
+			for i, item := range actual.OrderBy {
+				if i > 0 {
+					builder.WriteString(", ")
+				}
+				s.append(item, builder)
+			}
+		}
+		if actual.Frame != nil {
+			if len(actual.PartitionBy) > 0 || len(actual.OrderBy) > 0 {
+				builder.WriteByte(' ')
+			}
+			s.append(actual.Frame, builder)
+		}
+		builder.WriteByte(')')
+	case *expr.WindowOrder:
+		s.append(actual.X, builder)
+		if actual.Direction != "" {
+			builder.WriteString(" " + actual.Direction)
+		}
+	case *expr.WindowFrame:
+		builder.WriteString(actual.Unit + " ")
+		if actual.End != nil {
+			builder.WriteString("BETWEEN ")
+		}
+		s.append(actual.Start, builder)
+		if actual.End != nil {
+			builder.WriteString(" AND ")
+			s.append(actual.End, builder)
+		}
+	case *expr.WindowBound:
+		if actual.X != nil {
+			s.append(actual.X, builder)
+			builder.WriteByte(' ')
+		}
+		builder.WriteString(actual.Kind)
 	case *expr.Collate:
 		s.append(actual.X, builder)
 		builder.WriteString(" COLLATE ")

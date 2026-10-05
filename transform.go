@@ -71,6 +71,11 @@ func stripCollateSelect(sel *query.Select) error {
 		}
 		sel.Having.X = stripped
 	}
+	var err error
+	sel.QualifyClause, err = stripQualify(sel.QualifyClause)
+	if err != nil {
+		return err
+	}
 	for i := range sel.OrderBy {
 		stripped, err := stripCollateNode(sel.OrderBy[i].Expr)
 		if err != nil {
@@ -96,6 +101,25 @@ func stripCollateSelect(sel *query.Select) error {
 
 func stripCollateNode(n node.Node) (node.Node, error) {
 	switch actual := n.(type) {
+	case *expr.Window:
+		var err error
+		actual.X, err = stripCollateNode(actual.X)
+		if err != nil {
+			return nil, err
+		}
+		for i := range actual.PartitionBy {
+			actual.PartitionBy[i], err = stripCollateNode(actual.PartitionBy[i])
+			if err != nil {
+				return nil, err
+			}
+		}
+		for _, item := range actual.OrderBy {
+			item.X, err = stripCollateNode(item.X)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return actual, nil
 	case *expr.Collate:
 		return stripCollateNode(actual.X)
 	case *expr.FieldAccess:
@@ -321,6 +345,20 @@ func hasCollate(n node.Node) bool {
 	switch actual := n.(type) {
 	case nil:
 		return false
+	case *expr.Window:
+		if hasCollate(actual.X) {
+			return true
+		}
+		for _, item := range actual.PartitionBy {
+			if hasCollate(item) {
+				return true
+			}
+		}
+		for _, item := range actual.OrderBy {
+			if hasCollate(item.X) {
+				return true
+			}
+		}
 	case *expr.Collate:
 		return true
 	case *expr.Subscript:
@@ -389,6 +427,9 @@ func hasCollate(n node.Node) bool {
 			}
 		}
 		if actual.Having != nil && hasCollate(actual.Having.X) {
+			return true
+		}
+		if actual.QualifyClause != nil && hasCollate(actual.QualifyClause.X) {
 			return true
 		}
 		for _, item := range actual.OrderBy {

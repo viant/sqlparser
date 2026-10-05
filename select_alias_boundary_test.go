@@ -116,9 +116,6 @@ func TestSelectAliasBoundaryFromExtensions(t *testing.T) {
 			if strings.HasPrefix(remaining, "@suffix") {
 				from.Unparsed = "@suffix"
 				cursor.Pos += len("@suffix")
-			} else if strings.HasPrefix(remaining, "QUALIFY ") {
-				from.Unparsed = remaining
-				cursor.Pos = len(cursor.Input)
 			} else {
 				return err
 			}
@@ -127,6 +124,12 @@ func TestSelectAliasBoundaryFromExtensions(t *testing.T) {
 		}))
 		if err != nil {
 			t.Fatal(err)
+		}
+		if strings.HasPrefix(suffix, "QUALIFY ") {
+			if calls != 0 || parsed.From.Unparsed != "" || parsed.QualifyClause == nil || parsed.List[0].Alias != `"x"` {
+				t.Fatalf("QUALIFY must parse natively: %s", Stringify(parsed))
+			}
+			continue
 		}
 		if calls != 1 || parsed.From.Unparsed == "" || parsed.List[0].Alias != `"x"` {
 			t.Fatalf("lost extension: %s", Stringify(parsed))
@@ -199,6 +202,14 @@ func TestSelectAliasBoundaryOpaqueDialectBody(t *testing.T) {
 		inner := parsed.WithSelects[0].X
 		if len(inner.List) == 0 {
 			t.Fatal("lost native projection")
+		}
+		if strings.Contains(body, "QUALIFY") {
+			if inner.From.X == nil || inner.QualifyClause == nil || inner.List[0].Alias != "x" {
+				t.Fatalf("lost native window query: %+v", inner)
+			}
+			if _, ok := inner.List[0].Expr.(*expr.Window); !ok {
+				t.Fatalf("expected window expression, got %T", inner.List[0].Expr)
+			}
 		}
 		callFound := false
 		Traverse(inner.List[0].Expr, func(n node.Node) bool {

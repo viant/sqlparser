@@ -7,12 +7,14 @@ import (
 type (
 	//Select represent a select
 	Select struct {
-		List          List
-		From          From
-		Joins         []*Join
-		Qualify       *expr.Qualify
-		GroupBy       List
-		Having        *expr.Qualify
+		List    List
+		From    From
+		Joins   []*Join
+		Qualify *expr.Qualify
+		GroupBy List
+		Having  *expr.Qualify
+		// QualifyClause filters window results; Qualify above is the WHERE clause.
+		QualifyClause *expr.Qualify
 		OrderBy       List
 		Window        *expr.Raw
 		Limit         *expr.Literal

@@ -91,6 +91,7 @@ const (
 	notLikeOperator
 	globOperator
 	notGlobOperator
+	qualifyKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -269,3 +270,8 @@ var registerKeywordMatcher = parsly.NewToken(registerKeyword, "REGISTER", matche
 var typeKeywordMatcher = parsly.NewToken(typeKeyword, "TYPE", matcher.NewKeyword("type", &option.Case{}))
 
 var ttlKeywordMatcher = parsly.NewToken(ttlKeyword, "With TTL", matcher.NewFragment("with ttl", &option.Case{Sensitive: false}))
+
+var qualifyKeywordMatcher = parsly.NewToken(qualifyKeyword, "QUALIFY", selectionModifier{
+	keywords: matcher.NewKeyword("qualify", &option.Case{}),
+	selector: smatcher.NewSelector(false),
+})

@@ -100,10 +100,10 @@ beginMatch:
 		if asStruct && !completeQueryProjections(dest) {
 			return cursor.NewError(exprMatcher)
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 		pos := cursor.Pos
 		switch match.Code {
-		case whereKeyword, groupByKeyword, havingKeyword, orderByKeyword, windowTokenCode, unionKeyword:
+		case whereKeyword, groupByKeyword, havingKeyword, qualifyKeyword, orderByKeyword, windowTokenCode, unionKeyword:
 			// FROM is optional for constant projections. Their remaining
 			// clauses and UNION branches still belong to the statement AST.
 			handled, err := matchPostFrom(cursor, dest, match)
@@ -162,7 +162,7 @@ beginMatch:
 
 			dest.Joins = make([]*query.Join, 0)
 
-			match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+			match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 			if match.Code == parsly.EOF {
 				return nil
 			}
@@ -170,21 +170,21 @@ beginMatch:
 			hasMatch, err := matchPostFrom(cursor, dest, match)
 			if !hasMatch && err == nil {
 				if cursor.OnError != nil {
-					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 					if err = cursor.OnError(err, cursor, &dest.From); err != nil {
 						return err
 					}
-					match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 					if match.Code == parsly.EOF {
 						return nil
 					}
 					hasMatch, err = matchPostFrom(cursor, dest, match)
 					if !hasMatch && err == nil {
-						err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+						err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 					}
 
 				} else {
-					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 				}
 			}
 			if err != nil {
@@ -243,14 +243,14 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 			return false, err
 		}
 
-		match = cursor.MatchAfterOptional(whitespaceMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 
 	case groupByKeyword:
 		if err := parseGroupByList(cursor, &dest.GroupBy); err != nil {
 			return false, err
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 
 	case havingKeyword:
@@ -258,6 +258,30 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 		if err := ParseQualify(cursor, dest.Having); err != nil {
 			return false, err
 		}
+		match = cursor.MatchAfterOptional(whitespaceMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		return matchPostFrom(cursor, dest, match)
+	case qualifyKeyword:
+		if dest.QualifyClause != nil || len(dest.OrderBy) > 0 || dest.Window != nil {
+			return false, fmt.Errorf("duplicate or misplaced QUALIFY clause")
+		}
+		if !completeQueryProjections(dest) {
+			return false, fmt.Errorf("QUALIFY requires a complete SELECT list")
+		}
+		for _, condition := range []*expr.Qualify{dest.Qualify, dest.Having} {
+			if condition != nil && !completeExpression(condition.X) {
+				return false, fmt.Errorf("incomplete condition before QUALIFY")
+			}
+		}
+		for _, join := range dest.Joins {
+			if join.On != nil && !completeExpression(join.On.X) {
+				return false, fmt.Errorf("incomplete ON condition before QUALIFY")
+			}
+		}
+		condition, err := expectExpression(cursor)
+		if err != nil {
+			return false, err
+		}
+		dest.QualifyClause = &expr.Qualify{X: condition}
 		match = cursor.MatchAfterOptional(whitespaceMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 	case orderByKeyword:
@@ -300,6 +324,9 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 			}
 			match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
 			return matchPostFrom(cursor, dest, match)
+		}
+		if dest.QualifyClause != nil {
+			return false, cursor.NewError(intLiteralMatcher)
 		}
 		match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
