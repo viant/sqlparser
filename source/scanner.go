@@ -141,7 +141,7 @@ func protectedAt(text string, i int, subscript bool) (region, bool) {
 	if strings.HasPrefix(text[i:], "--") {
 		result.kind = "line comment"
 		result.closed = true
-		if end := strings.IndexByte(text[i:], '\n'); end >= 0 {
+		if end := strings.IndexAny(text[i:], "\r\n"); end >= 0 {
 			result.end = i + end
 		}
 		return result, true
