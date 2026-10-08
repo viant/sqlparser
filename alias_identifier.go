@@ -11,7 +11,18 @@ import (
 // decoding with the native identifier parser.
 type aliasIdentifier struct{}
 
-func (aliasIdentifier) Match(cursor *parsly.Cursor) int {
+// Match uses the byte-scanning implementation as the runtime default.
+// script/identifierbench switches only this delegation for its deprecated baseline.
+func (identifier aliasIdentifier) Match(cursor *parsly.Cursor) int {
+	return identifier.MatchBytes(cursor)
+}
+
+// matchStringDeprecated is the original matcher, retained only as a reference
+// for differential compatibility tests and A/B benchmarks.
+//
+// Deprecated: Use MatchBytes. This implementation copies the entire SQL input
+// into a string on each match, even when inspecting only a short identifier.
+func (aliasIdentifier) matchStringDeprecated(cursor *parsly.Cursor) int {
 	if cursor.Pos >= len(cursor.Input) {
 		return 0
 	}
@@ -19,6 +30,8 @@ func (aliasIdentifier) Match(cursor *parsly.Cursor) int {
 	if cursor.Input[cursor.Pos] == '\'' {
 		return 0
 	}
+	// This []byte-to-string conversion copies the entire SQL input on each call,
+	// not just the identifier being matched.
 	parser := tableIdentifierParser{source: string(cursor.Input), position: cursor.Pos}
 	if _, err := parser.part(); err != nil {
 		return 0
