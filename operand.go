@@ -215,7 +215,12 @@ func expectOperandBase(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.N
 		return applyCollate(cursor, result)
 	case intervalKeyword:
 		op := match.Text(cursor)
+		start := cursor.Pos
 		value, err := expectOperand(cursor)
+		if literal, ok := value.(*expr.Literal); !ok || literal.Kind != "string" {
+			cursor.Pos = start
+			value, err = expectExpression(cursor)
+		}
 		if err != nil || value == nil {
 			return nil, cursor.NewError(exprMatcher)
 		}
