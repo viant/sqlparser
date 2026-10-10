@@ -20,3 +20,24 @@ func BenchmarkCodeScannerTraversal(b *testing.B) {
 		})
 	}
 }
+
+func BenchmarkFindCodeToken(b *testing.B) {
+	SQL := strings.Repeat("SELECT id, name FROM records WHERE name != 'literal' /* protected text */;\n", 24)
+	for _, suffix := range []string{"", " '$View.ParentJoinOn'", " $View.ParentJoinOn('AND', 'id')"} {
+		name := "absent"
+		if suffix != "" {
+			name = "protected"
+			if suffix[1] != '\'' {
+				name = "code"
+			}
+		}
+		b.Run(name, func(b *testing.B) {
+			text := SQL + suffix
+			b.ReportAllocs()
+			b.ResetTimer()
+			for n := 0; n < b.N; n++ {
+				FindCodeToken(text, "$View.", 0)
+			}
+		})
+	}
+}
