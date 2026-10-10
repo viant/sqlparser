@@ -195,7 +195,7 @@ var insertIntoKeywordMatcher = parsly.NewToken(insertIntoKeyword, "INSERT INTO",
 
 var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", matcher.NewKeyword("values", &option.Case{}))
 
-var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "&", "^", "||", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
+var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{":=", "+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "&", "^", "||", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
 var notLikeOperatorMatcher = parsly.NewToken(notLikeOperator, "NOT LIKE", keywordSequence{"NOT", "LIKE"})
 var globOperatorMatcher = parsly.NewToken(globOperator, "GLOB", keywordSequence{"GLOB"})
 var notGlobOperatorMatcher = parsly.NewToken(notGlobOperator, "NOT GLOB", keywordSequence{"NOT", "GLOB"})

@@ -27,7 +27,7 @@ func (b *Binary) Normalize() *Binary {
 	normalized.Y = right.Normalize()
 	right = normalized.Y.(*Binary)
 	leftPrecedence, rightPrecedence := binaryPrecedence(normalized.Op), binaryPrecedence(right.Op)
-	if rightPrecedence > 0 && (leftPrecedence > rightPrecedence || leftAssociativeValueOperator(normalized.Op, right.Op)) {
+	if rightPrecedence != 0 && (leftPrecedence > rightPrecedence || leftAssociativeValueOperator(normalized.Op, right.Op)) {
 		xBin := (&Binary{X: normalized.X, Y: right.X, Op: normalized.Op}).Normalize()
 		return (&Binary{X: xBin, Y: right.Y, Op: right.Op}).Normalize()
 	}
@@ -36,6 +36,8 @@ func (b *Binary) Normalize() *Binary {
 
 func binaryPrecedence(op string) int {
 	switch strings.ToUpper(strings.TrimSpace(op)) {
+	case ":=":
+		return -1 // MySQL assignment binds below OR and associates right to left.
 	case "OR":
 		return 1
 	case "AND":
