@@ -56,7 +56,7 @@ func binaryPrecedence(op string) int {
 		return 8
 	case "+", "-":
 		return 9
-	case "*", "/":
+	case "*", "/", "%":
 		return 10
 	case "||":
 		return 11
