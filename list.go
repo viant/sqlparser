@@ -21,7 +21,7 @@ func parseSelectListItem(cursor *parsly.Cursor, list *query.List) error {
 	aliasEnd := cursor.Pos
 	list.Append(item)
 	for {
-		match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, notRegexpOperatorMatcher, regexpOperatorMatcher, notRlikeOperatorMatcher, rlikeOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
 		switch match.Code {
 		case commentBlock:
 			if item.Comments != "" {
@@ -35,7 +35,7 @@ func parseSelectListItem(cursor *parsly.Cursor, list *query.List) error {
 				}
 				aliasEnd = cursor.Pos
 			}
-		case logicalOperator, binaryOperator, notLikeOperator, notGlobOperator, globOperator:
+		case logicalOperator, binaryOperator, notLikeOperator, notGlobOperator, globOperator, regexpOperator, notRegexpOperator, rlikeOperator, notRlikeOperator:
 			cursor.Pos = match.Offset
 			// An alias completes its expression; an operator cannot start a
 			// second expression after it and silently replace that alias.
@@ -122,7 +122,7 @@ func parseOrderByListItem(cursor *parsly.Cursor, list *query.List) error {
 		item.Direction = matched.Text(cursor)
 	}
 	list.Append(item)
-	match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, notRegexpOperatorMatcher, regexpOperatorMatcher, notRlikeOperatorMatcher, rlikeOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
 	switch match.Code {
 	case commentBlock:
 		item.Comments = match.Text(cursor)
@@ -130,7 +130,7 @@ func parseOrderByListItem(cursor *parsly.Cursor, list *query.List) error {
 		if match.Code == nextCode {
 			return parseOrderByListItem(cursor, list)
 		}
-	case logicalOperator, binaryOperator, notLikeOperator, notGlobOperator, globOperator:
+	case logicalOperator, binaryOperator, notLikeOperator, notGlobOperator, globOperator, regexpOperator, notRegexpOperator, rlikeOperator, notRlikeOperator:
 		cursor.Pos -= match.Size
 		binaryExpr := expr.NewBinary(item.Expr)
 		item.Expr = binaryExpr
@@ -164,7 +164,7 @@ func parseGroupByList(cursor *parsly.Cursor, list *query.List) error {
 		item.Direction = matched.Text(cursor)
 	}
 	list.Append(item)
-	match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, inlineCommentMatcher, commentBlockMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, notRegexpOperatorMatcher, regexpOperatorMatcher, notRlikeOperatorMatcher, rlikeOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, nextMatcher)
 	switch match.Code {
 	case commentBlock:
 		item.Comments = match.Text(cursor)
@@ -172,7 +172,7 @@ func parseGroupByList(cursor *parsly.Cursor, list *query.List) error {
 		if match.Code == nextCode {
 			return parseGroupByList(cursor, list)
 		}
-	case logicalOperator, binaryOperator, notLikeOperator, notGlobOperator, globOperator:
+	case logicalOperator, binaryOperator, notLikeOperator, notGlobOperator, globOperator, regexpOperator, notRegexpOperator, rlikeOperator, notRlikeOperator:
 		cursor.Pos -= match.Size
 		binaryExpr := expr.NewBinary(item.Expr)
 		item.Expr = binaryExpr

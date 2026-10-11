@@ -91,6 +91,10 @@ const (
 	notLikeOperator
 	globOperator
 	notGlobOperator
+	regexpOperator
+	notRegexpOperator
+	rlikeOperator
+	notRlikeOperator
 	qualifyKeyword
 )
 
@@ -199,6 +203,10 @@ var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", m
 var notLikeOperatorMatcher = parsly.NewToken(notLikeOperator, "NOT LIKE", keywordSequence{"NOT", "LIKE"})
 var globOperatorMatcher = parsly.NewToken(globOperator, "GLOB", keywordSequence{"GLOB"})
 var notGlobOperatorMatcher = parsly.NewToken(notGlobOperator, "NOT GLOB", keywordSequence{"NOT", "GLOB"})
+var regexpOperatorMatcher = parsly.NewToken(regexpOperator, "REGEXP", keywordSequence{"REGEXP"})
+var notRegexpOperatorMatcher = parsly.NewToken(notRegexpOperator, "NOT REGEXP", keywordSequence{"NOT", "REGEXP"})
+var rlikeOperatorMatcher = parsly.NewToken(rlikeOperator, "RLIKE", keywordSequence{"RLIKE"})
+var notRlikeOperatorMatcher = parsly.NewToken(notRlikeOperator, "NOT RLIKE", keywordSequence{"NOT", "RLIKE"})
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", selectionModifier{

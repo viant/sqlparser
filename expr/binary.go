@@ -44,7 +44,7 @@ func binaryPrecedence(op string) int {
 		return 2
 	case "GLOB", "NOT GLOB":
 		return 3
-	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "BETWEEN":
+	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "REGEXP", "NOT REGEXP", "RLIKE", "NOT RLIKE", "BETWEEN":
 		return 4
 	case "|":
 		return 5
