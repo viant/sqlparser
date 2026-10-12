@@ -45,9 +45,12 @@ func (p TableIdentifierParser) Parts(source string) ([]string, error) {
 	if len(parts) > 3 {
 		return nil, fmt.Errorf("BigQuery table identifier has more than three parts")
 	}
-	for _, part := range parts {
+	for i, part := range parts {
 		if strings.TrimSpace(part) == "" || strings.ContainsAny(part, ":`[]") {
 			return nil, fmt.Errorf("invalid BigQuery table identifier part")
+		}
+		if strings.Contains(part, "*") && (i != len(parts)-1 || strings.Count(part, "*") != 1 || !strings.HasSuffix(part, "*")) {
+			return nil, fmt.Errorf("invalid BigQuery table wildcard")
 		}
 	}
 	return parts, nil
@@ -125,6 +128,10 @@ func (p *tableIdentifierParser) part() (string, error) {
 		r, size := utf8.DecodeRuneInString(p.source[p.position:])
 		if r == utf8.RuneError && size == 1 {
 			return "", fmt.Errorf("invalid UTF-8 in table identifier")
+		}
+		if p.bigQuery && r == '*' {
+			p.position += size
+			break
 		}
 		allowed := unicode.IsLetter(r) || r == '_' || p.position > start && (unicode.IsDigit(r) || r == '$' || p.bigQuery && r == '-')
 		if !allowed {
