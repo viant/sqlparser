@@ -19,9 +19,9 @@ func parseInsert(cursor *parsly.Cursor, stmt *insert.Statement) error {
 	match := cursor.MatchAfterOptional(whitespaceMatcher, insertIntoKeywordMatcher)
 	switch match.Code {
 	case insertIntoKeyword:
-		match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, tableMatcher, doubleQuotedStringLiteralMatcher)
 		switch match.Code {
-		case tableTokenCode:
+		case tableTokenCode, doubleQuotedStringLiteral:
 			sel := match.Text(cursor)
 			stmt.Target.X = expr.NewSelector(sel)
 			match = cursor.MatchAfterOptional(whitespaceMatcher, commentBlockMatcher)
@@ -82,6 +82,8 @@ func parseInsert(cursor *parsly.Cursor, stmt *insert.Statement) error {
 				}
 
 			}
+		default:
+			return cursor.NewError(tableMatcher, doubleQuotedStringLiteralMatcher)
 		}
 	default:
 		return cursor.NewError(insertIntoKeywordMatcher)
