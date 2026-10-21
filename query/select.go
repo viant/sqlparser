@@ -19,6 +19,8 @@ type (
 		Window        *expr.Raw
 		Limit         *expr.Literal
 		Offset        *expr.Literal
+		// ForUpdate locks the physical rows selected by this SELECT.
+		ForUpdate     bool
 		Kind          string
 		Union         *Union
 		WithRecursive bool

@@ -100,7 +100,7 @@ beginMatch:
 		if asStruct && !completeQueryProjections(dest) {
 			return cursor.NewError(exprMatcher)
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, fromKeywordMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		pos := cursor.Pos
 		switch match.Code {
 		case whereKeyword, groupByKeyword, havingKeyword, qualifyKeyword, orderByKeyword, windowTokenCode, unionKeyword:
@@ -162,7 +162,7 @@ beginMatch:
 
 			dest.Joins = make([]*query.Join, 0)
 
-			match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+			match = cursor.MatchAfterOptional(whitespaceMatcher, nextMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 			if match.Code == parsly.EOF {
 				return nil
 			}
@@ -170,21 +170,21 @@ beginMatch:
 			hasMatch, err := matchPostFrom(cursor, dest, match)
 			if !hasMatch && err == nil {
 				if cursor.OnError != nil {
-					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 					if err = cursor.OnError(err, cursor, &dest.From); err != nil {
 						return err
 					}
-					match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 					if match.Code == parsly.EOF {
 						return nil
 					}
 					hasMatch, err = matchPostFrom(cursor, dest, match)
 					if !hasMatch && err == nil {
-						err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+						err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 					}
 
 				} else {
-					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+					err = cursor.NewError(joinMatcher, whereKeywordMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 				}
 			}
 			if err != nil {
@@ -227,6 +227,16 @@ func stripTemplateBuiltins(query string) string {
 
 func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.TokenMatch) (bool, error) {
 	switch match.Code {
+	case forUpdateKeyword:
+		if dest.ForUpdate || dest.From.X == nil || !completeQueryProjections(dest) {
+			return false, fmt.Errorf("invalid FOR UPDATE clause")
+		}
+		skipExpressionSpace(cursor)
+		if cursor.Pos != len(cursor.Input) {
+			return false, fmt.Errorf("unsupported suffix after FOR UPDATE")
+		}
+		dest.ForUpdate = true
+		return true, nil
 	case nextCode:
 
 		if err := appendJoin(cursor, match, dest, false); err != nil {
@@ -243,14 +253,14 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 			return false, err
 		}
 
-		match = cursor.MatchAfterOptional(whitespaceMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 
 	case groupByKeyword:
 		if err := parseGroupByList(cursor, &dest.GroupBy); err != nil {
 			return false, err
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 
 	case havingKeyword:
@@ -258,7 +268,7 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 		if err := ParseQualify(cursor, dest.Having); err != nil {
 			return false, err
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 	case qualifyKeyword:
 		if dest.QualifyClause != nil || len(dest.OrderBy) > 0 || dest.Window != nil {
@@ -282,13 +292,13 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 			return false, err
 		}
 		dest.QualifyClause = &expr.Qualify{X: condition}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 	case orderByKeyword:
 		if err := parseOrderByListItem(cursor, &dest.OrderBy); err != nil {
 			return false, err
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 	case unionKeyword:
 		matchedText := match.Text(cursor)
@@ -322,13 +332,13 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 				}
 				dest.Offset = literal
 			}
-			match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
+			match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 			return matchPostFrom(cursor, dest, match)
 		}
 		if dest.QualifyClause != nil {
 			return false, cursor.NewError(intLiteralMatcher)
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		return matchPostFrom(cursor, dest, match)
 	case parsly.EOF:
 		return true, nil

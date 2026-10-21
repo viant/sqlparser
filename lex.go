@@ -96,6 +96,7 @@ const (
 	rlikeOperator
 	notRlikeOperator
 	qualifyKeyword
+	forUpdateKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -243,6 +244,7 @@ var unionMatcher = parsly.NewToken(unionKeyword, "UNION|UNION ALL", matcher.NewS
 	"union",
 }, &option.Case{}))
 var exprMatcher = parsly.NewToken(exprToken, ",EXPR", matcher.NewNop())
+var forUpdateMatcher = parsly.NewToken(forUpdateKeyword, "FOR UPDATE", matcher.NewSpacedSet([]string{"for update"}, &option.Case{}))
 
 var deleteMatcher = parsly.NewToken(deleteCode, "DELETE", matcher.NewKeyword("delete", &option.Case{}))
 var notNullMatcher = parsly.NewToken(notNullToken, "NOT NULL", matcher.NewSpacedSet([]string{

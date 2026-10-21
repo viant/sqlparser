@@ -118,6 +118,9 @@ func (s Stringifier) append(n node.Node, builder *bytes.Buffer) {
 			builder.WriteString(" OFFSET ")
 			builder.WriteString(Stringify(actual.Offset))
 		}
+		if actual.ForUpdate {
+			builder.WriteString(" FOR UPDATE")
+		}
 		if union := actual.Union; union != nil {
 			builder.WriteString(" " + union.Raw + " ")
 			s.append(union.X, builder)
