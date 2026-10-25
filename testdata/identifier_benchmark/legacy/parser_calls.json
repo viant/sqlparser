@@ -1,0 +1,65 @@
+[
+  {
+    "sql_file": "parser_sql/projection_source.sql",
+    "sql_sha256": "03ce9fdf6a1c42c5b7f4caf1f3e1c2084e753986d143c4c766fb8af01199fd12",
+    "caller": "github.com/viant/datly/sql.SelectorProjection.columns",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/projection_source.sql",
+    "sql_sha256": "03ce9fdf6a1c42c5b7f4caf1f3e1c2084e753986d143c4c766fb8af01199fd12",
+    "caller": "github.com/viant/datly/sql.selectProjectionSource.parse",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/conversation_reader.sql",
+    "sql_sha256": "1893bf011916036aeb5b294d7489bc2d6a3f38e456c1d21792fd9c878447bacc",
+    "caller": "github.com/viant/datly/sql.SelectorProjection.columns",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/conversation_reader.sql",
+    "sql_sha256": "1893bf011916036aeb5b294d7489bc2d6a3f38e456c1d21792fd9c878447bacc",
+    "caller": "github.com/viant/datly/sql.SelectorProjection.prepareSelectedStar",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/conversation_reader.sql",
+    "sql_sha256": "1893bf011916036aeb5b294d7489bc2d6a3f38e456c1d21792fd9c878447bacc",
+    "caller": "github.com/viant/datly/sql.prepareStarProjection",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/projection_source.sql",
+    "sql_sha256": "03ce9fdf6a1c42c5b7f4caf1f3e1c2084e753986d143c4c766fb8af01199fd12",
+    "caller": "github.com/viant/datly/sql.SelectorProjection.columns",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/projection_source.sql",
+    "sql_sha256": "03ce9fdf6a1c42c5b7f4caf1f3e1c2084e753986d143c4c766fb8af01199fd12",
+    "caller": "github.com/viant/datly/sql.selectProjectionSource.parse",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/conversation_reader.sql",
+    "sql_sha256": "1893bf011916036aeb5b294d7489bc2d6a3f38e456c1d21792fd9c878447bacc",
+    "caller": "github.com/viant/datly/sql.SelectorProjection.columns",
+    "options": 0,
+    "failed": false
+  },
+  {
+    "sql_file": "parser_sql/conversation_reader_projected.sql",
+    "sql_sha256": "c46389f6eea7adb73b5419932af90bc74a4b841fbe8a89231782fd76240304b8",
+    "caller": "github.com/viant/datly/sql.normalizeSelectProjection",
+    "options": 0,
+    "failed": false
+  }
+]

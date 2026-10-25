@@ -19,7 +19,7 @@ func (t Token) ReplaceAll(source, replacement string) string {
 }
 
 func FindCodeToken(source, token string, start int) int {
-	if token == "" {
+	if token == "" || !strings.Contains(source, token) {
 		return -1
 	}
 	scanner := NewCodeScanner(source, start)

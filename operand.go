@@ -12,7 +12,13 @@ import (
 )
 
 func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
-	operand, err := expectOperandBase(cursor)
+	return expectOperandWithMatcher(cursor, selectorMatcher)
+}
+
+// Relation targets use tableOperandMatcher for their name; nested expressions still
+// use expectOperand so a dash in an argument remains a subtraction operator.
+func expectOperandWithMatcher(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.Node, error) {
+	operand, err := expectOperandBase(cursor, nameMatcher)
 	if err != nil || operand == nil {
 		return operand, err
 	}
@@ -21,6 +27,20 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 		return nil, err
 	}
 	for {
+		if matchWindowKeyword(cursor, "OVER") {
+			if _, ok := operand.(*expr.Call); !ok {
+				return nil, fmt.Errorf("OVER requires a function call")
+			}
+			operand, err = parseWindowExpression(cursor, operand)
+			if err != nil {
+				return nil, err
+			}
+			operand, err = applyCollate(cursor, operand)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
 		tail := *cursor
 		skipExpressionSpace(&tail)
 		if tail.Pos < len(tail.Input) && tail.Input[tail.Pos] == '.' {
@@ -109,7 +129,7 @@ func expectFieldName(cursor *parsly.Cursor) (string, error) {
 	return "", fmt.Errorf("expected field name at byte %d", start)
 }
 
-func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
+func expectOperandBase(cursor *parsly.Cursor, nameMatcher *parsly.Token) (node.Node, error) {
 	literal, err := TryParseLiteral(cursor)
 	if literal != nil || err != nil {
 		if err != nil {
@@ -124,7 +144,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		orderByKeywordMatcher,
 		asKeywordMatcher,
 		exceptKeywordMatcher,
-		onKeywordMatcher, fromKeywordMatcher, whereKeywordMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, windowMatcher, nextMatcher,
+		onKeywordMatcher, fromKeywordMatcher, whereKeywordMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, windowMatcher, nextMatcher,
 		parenthesesMatcher,
 		caseBlockMatcher,
 		starTokenMatcher,
@@ -134,7 +154,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		unaryPlusMatcher,
 		nullMatcher,
 		placeholderMatcher,
-		selectorMatcher,
+		nameMatcher,
 		commentBlockMatcher,
 		binaryOperatorMatcher,
 	)
@@ -156,7 +176,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 	switch match.Code {
 	case binaryOperator:
 		return nil, cursor.NewError(exprMatcher)
-	case selectorTokenCode, placeholderTokenCode:
+	case selectorTokenCode, tableTokenCode, placeholderTokenCode:
 
 		selRaw := match.Text(cursor)
 		var selector node.Node
@@ -199,7 +219,12 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		return applyCollate(cursor, result)
 	case intervalKeyword:
 		op := match.Text(cursor)
+		start := cursor.Pos
 		value, err := expectOperand(cursor)
+		if literal, ok := value.(*expr.Literal); !ok || literal.Kind != "string" {
+			cursor.Pos = start
+			value, err = expectExpression(cursor)
+		}
 		if err != nil || value == nil {
 			return nil, cursor.NewError(exprMatcher)
 		}
@@ -271,7 +296,7 @@ func expectOperandBase(cursor *parsly.Cursor) (node.Node, error) {
 		return applyCollate(cursor, unary)
 	case commentBlock:
 		return expectOperand(cursor)
-	case whenKeyword, thenKeyword, elseKeyword, endKeyword, asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, windowTokenCode, nextCode:
+	case whenKeyword, thenKeyword, elseKeyword, endKeyword, asKeyword, orderByKeyword, onKeyword, fromKeyword, whereKeyword, joinToken, groupByKeyword, havingKeyword, qualifyKeyword, windowTokenCode, nextCode:
 		cursor.Pos = pos - match.Size
 	}
 	if match.Code == parsly.Invalid && cursor.OnError != nil {

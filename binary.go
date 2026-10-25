@@ -29,11 +29,19 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
 	skipExpressionSpace(cursor)
 	pos := cursor.Pos
 	if binary.Op == "" {
-		match := cursor.MatchAfterOptional(whitespaceMatcher, betweenKeywordMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, placeholderMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, betweenKeywordMatcher, notLikeOperatorMatcher, notGlobOperatorMatcher, globOperatorMatcher, notRegexpOperatorMatcher, regexpOperatorMatcher, notRlikeOperatorMatcher, rlikeOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher, placeholderMatcher)
 		switch match.Code {
 		case notLikeOperator:
 			// Keep precedence independent of comments or whitespace between words.
 			binary.Op = "NOT LIKE"
+		case regexpOperator:
+			binary.Op = "REGEXP"
+		case notRegexpOperator:
+			binary.Op = "NOT REGEXP"
+		case rlikeOperator:
+			binary.Op = "RLIKE"
+		case notRlikeOperator:
+			binary.Op = "NOT RLIKE"
 		case globOperator:
 			binary.Op = "GLOB"
 		case notGlobOperator:
@@ -78,7 +86,7 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
 				placeholder := &expr.Placeholder{Name: match.Text(cursor)}
 				binary.Y = placeholder
 				prevPos := cursor.Pos
-				match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, groupByMatcher, havingKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher, logicalOperatorMatcher)
+				match = cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher, logicalOperatorMatcher)
 				switch match.Code {
 				case logicalOperator:
 					additionalExpr := &expr.Binary{X: binary.Y, Op: match.Text(cursor)}
@@ -88,7 +96,7 @@ func parseBinaryExpr(cursor *parsly.Cursor, binary *expr.Binary) (err error) {
 					binary.Y = additionalExpr
 				case parenthesesCode:
 					placeholder.Name += match.Text(cursor)
-				case groupByKeyword, havingKeyword, orderByKeyword, windowTokenCode, unionKeyword:
+				case groupByKeyword, havingKeyword, qualifyKeyword, orderByKeyword, windowTokenCode, forUpdateKeyword, unionKeyword:
 					cursor.Pos = prevPos
 					return nil
 				case parsly.Invalid:

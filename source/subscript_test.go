@@ -41,7 +41,7 @@ func TestSubscriptSourceBoundaries(t *testing.T) {
 }
 
 func TestBracketQuotesAfterKeywords(t *testing.T) {
-	for _, keyword := range []string{"AS", "FROM", "SELECT", "JOIN", "WHERE", "GROUP BY", "ORDER /* hint */ BY", "GROUP -- hint\nBY", "INTO", "UPDATE", "as", "from"} {
+	for _, keyword := range []string{"AS", "FROM", "SELECT", "JOIN", "WHERE", "QUALIFY", "GROUP BY", "ORDER /* hint */ BY", "GROUP -- hint\nBY", "INTO", "UPDATE", "as", "from"} {
 		for _, quoted := range []string{"[a--b]", "[a]]b]", "[$INDEX]"} {
 			SQL := keyword + quoted
 			t.Run(SQL, func(t *testing.T) {

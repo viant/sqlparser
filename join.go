@@ -51,13 +51,13 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 		}
 	}
 	join.Span.End = uint32(len(strings.TrimRight(string(cursor.Input[:cursor.Pos]), " \t\r\n")))
-	match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+	match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 	if match.Code == parsly.EOF {
 		return nil
 	}
 	if match.Code == commentBlock {
 		join.Comments = match.Text(cursor)
-		match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		match = cursor.MatchAfterOptional(whitespaceMatcher, joinMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 		if match.Code == parsly.EOF {
 			return nil
 		}
@@ -65,7 +65,7 @@ func parseJoin(cursor *parsly.Cursor, join *query.Join, dest *query.Select, expe
 
 	hasMatch, err := matchPostFrom(cursor, dest, match)
 	if !hasMatch && err == nil {
-		err = cursor.NewError(joinMatcher, groupByMatcher, havingKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, unionMatcher)
+		err = cursor.NewError(joinMatcher, groupByMatcher, havingKeywordMatcher, qualifyKeywordMatcher, whereKeywordMatcher, orderByKeywordMatcher, windowMatcher, forUpdateMatcher, unionMatcher)
 	}
 
 	return err
@@ -78,7 +78,7 @@ func parseJoinTarget(cursor *parsly.Cursor, join *query.Join) error {
 		return nil
 	}
 	cursor.Pos = pos
-	operand, err := expectOperand(cursor)
+	operand, err := expectOperandWithMatcher(cursor, tableOperandMatcher)
 	if err != nil {
 		return err
 	}

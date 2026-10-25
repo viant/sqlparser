@@ -141,7 +141,7 @@ func protectedAt(text string, i int, subscript bool) (region, bool) {
 	if strings.HasPrefix(text[i:], "--") {
 		result.kind = "line comment"
 		result.closed = true
-		if end := strings.IndexByte(text[i:], '\n'); end >= 0 {
+		if end := strings.IndexAny(text[i:], "\r\n"); end >= 0 {
 			result.end = i + end
 		}
 		return result, true
@@ -229,7 +229,7 @@ func subscriptStart(text string, position int, precedingToken string) bool {
 	// These tokens introduce a name/expression rather than complete an
 	// operand. SQL does not require whitespace before a quoted identifier.
 	for _, keyword := range []string{
-		"SELECT", "AS", "FROM", "JOIN", "WHERE", "ON", "BY", "HAVING",
+		"SELECT", "AS", "FROM", "JOIN", "WHERE", "ON", "BY", "HAVING", "QUALIFY",
 		"WHEN", "THEN", "ELSE", "CASE", "AND", "OR", "NOT", "IN", "IS",
 		"LIKE", "BETWEEN", "DISTINCT", "ALL", "UPDATE", "INTO", "TABLE",
 		"USING", "SET", "RETURNING", "WITH", "RECURSIVE", "DELETE", "INSERT",
@@ -255,7 +255,7 @@ func bracketNameAfterKeyword(previous, keyword string) bool {
 		if len(previous) == 1 && strings.ContainsAny(previous, "([,+-*/%=<>|") {
 			return false
 		}
-		for _, introducer := range []string{"SELECT", "WHERE", "ON", "BY", "HAVING", "WHEN", "THEN", "ELSE", "AND", "OR", "NOT", "IN", "IS", "LIKE", "BETWEEN", "DISTINCT", "ALL", "SET", "RETURNING"} {
+		for _, introducer := range []string{"SELECT", "WHERE", "ON", "BY", "HAVING", "QUALIFY", "WHEN", "THEN", "ELSE", "AND", "OR", "NOT", "IN", "IS", "LIKE", "BETWEEN", "DISTINCT", "ALL", "SET", "RETURNING"} {
 			if strings.EqualFold(previous, introducer) {
 				return false
 			}

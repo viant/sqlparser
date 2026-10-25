@@ -27,7 +27,7 @@ func (b *Binary) Normalize() *Binary {
 	normalized.Y = right.Normalize()
 	right = normalized.Y.(*Binary)
 	leftPrecedence, rightPrecedence := binaryPrecedence(normalized.Op), binaryPrecedence(right.Op)
-	if rightPrecedence > 0 && (leftPrecedence > rightPrecedence || leftAssociativeValueOperator(normalized.Op, right.Op)) {
+	if rightPrecedence != 0 && (leftPrecedence > rightPrecedence || leftAssociativeValueOperator(normalized.Op, right.Op)) {
 		xBin := (&Binary{X: normalized.X, Y: right.X, Op: normalized.Op}).Normalize()
 		return (&Binary{X: xBin, Y: right.Y, Op: right.Op}).Normalize()
 	}
@@ -36,13 +36,15 @@ func (b *Binary) Normalize() *Binary {
 
 func binaryPrecedence(op string) int {
 	switch strings.ToUpper(strings.TrimSpace(op)) {
+	case ":=":
+		return -1 // MySQL assignment binds below OR and associates right to left.
 	case "OR":
 		return 1
 	case "AND":
 		return 2
 	case "GLOB", "NOT GLOB":
 		return 3
-	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "BETWEEN":
+	case "=", "!=", "<>", ">=", "<=", ">", "<", "IN", "NOT IN", "IS NOT", "IS", "LIKE", "NOT LIKE", "REGEXP", "NOT REGEXP", "RLIKE", "NOT RLIKE", "BETWEEN":
 		return 4
 	case "|":
 		return 5
@@ -54,7 +56,7 @@ func binaryPrecedence(op string) int {
 		return 8
 	case "+", "-":
 		return 9
-	case "*", "/":
+	case "*", "/", "%":
 		return 10
 	case "||":
 		return 11

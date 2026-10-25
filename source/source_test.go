@@ -80,7 +80,7 @@ func TestClauseBoundaries(t *testing.T) {
 			}
 		})
 	}
-	for _, tail := range []string{"GROUP BY id", "HAVING count(*)>1", "ORDER BY id", "LIMIT 1", "OFFSET 2", "UNION SELECT id FROM other", ";"} {
+	for _, tail := range []string{"GROUP BY id", "HAVING count(*)>1", "QUALIFY ROW_NUMBER() OVER (ORDER BY id)=1", "ORDER BY id", "LIMIT 1", "OFFSET 2", "UNION SELECT id FROM other", ";"} {
 		source := "SELECT id FROM t WHERE id IN (SELECT id FROM x LIMIT 2) " + tail
 		if got := CriteriaBoundary(source); got != strings.Index(source, tail) {
 			t.Fatalf("boundary %d in %s", got, source)

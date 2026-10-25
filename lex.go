@@ -91,6 +91,12 @@ const (
 	notLikeOperator
 	globOperator
 	notGlobOperator
+	regexpOperator
+	notRegexpOperator
+	rlikeOperator
+	notRlikeOperator
+	qualifyKeyword
+	forUpdateKeyword
 )
 
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
@@ -194,10 +200,14 @@ var insertIntoKeywordMatcher = parsly.NewToken(insertIntoKeyword, "INSERT INTO",
 
 var insertValesKeywordMatcher = parsly.NewToken(insertValuesKeyword, "VALUES", matcher.NewKeyword("values", &option.Case{}))
 
-var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "&", "^", "||", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
+var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{":=", "+", "!=", "<>", ">=", "<=", "<<", ">>", "=", "-", ">", "<", "*", "/", "%", "&", "^", "||", "|", "in", "not in", "is not", "is", "like"}, &option.Case{}))
 var notLikeOperatorMatcher = parsly.NewToken(notLikeOperator, "NOT LIKE", keywordSequence{"NOT", "LIKE"})
 var globOperatorMatcher = parsly.NewToken(globOperator, "GLOB", keywordSequence{"GLOB"})
 var notGlobOperatorMatcher = parsly.NewToken(notGlobOperator, "NOT GLOB", keywordSequence{"NOT", "GLOB"})
+var regexpOperatorMatcher = parsly.NewToken(regexpOperator, "REGEXP", keywordSequence{"REGEXP"})
+var notRegexpOperatorMatcher = parsly.NewToken(notRegexpOperator, "NOT REGEXP", keywordSequence{"NOT", "REGEXP"})
+var rlikeOperatorMatcher = parsly.NewToken(rlikeOperator, "RLIKE", keywordSequence{"RLIKE"})
+var notRlikeOperatorMatcher = parsly.NewToken(notRlikeOperator, "NOT RLIKE", keywordSequence{"NOT", "RLIKE"})
 var assignOperatorMatcher = parsly.NewToken(assignOperator, "assign OPERATOR", matcher.NewSpacedSet([]string{"="}, &option.Case{}))
 
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", selectionModifier{
@@ -221,6 +231,7 @@ var aliasIdentifierMatcher = parsly.NewToken(identifierCode, "ALIAS", aliasIdent
 var identifierMatcher = parsly.NewToken(identifierCode, "IDENT", smatcher.NewIdentifier())
 var selectorMatcher = parsly.NewToken(selectorTokenCode, "SELECTOR", smatcher.NewSelector(false))
 var tableMatcher = parsly.NewToken(tableTokenCode, "TABLE MATCHER", smatcher.NewSelector(true))
+var tableOperandMatcher = parsly.NewToken(tableTokenCode, "TABLE OPERAND", smatcher.NewTableOperandSelector())
 var bracedTableMatcher = parsly.NewToken(tableTokenCode, "BRACED TABLE", smatcher.NewBracedTableSelector())
 
 var placeholderMatcher = parsly.NewToken(placeholderTokenCode, "SELECTOR", smatcher.NewPlaceholder())
@@ -233,6 +244,7 @@ var unionMatcher = parsly.NewToken(unionKeyword, "UNION|UNION ALL", matcher.NewS
 	"union",
 }, &option.Case{}))
 var exprMatcher = parsly.NewToken(exprToken, ",EXPR", matcher.NewNop())
+var forUpdateMatcher = parsly.NewToken(forUpdateKeyword, "FOR UPDATE", matcher.NewSpacedSet([]string{"for update"}, &option.Case{}))
 
 var deleteMatcher = parsly.NewToken(deleteCode, "DELETE", matcher.NewKeyword("delete", &option.Case{}))
 var notNullMatcher = parsly.NewToken(notNullToken, "NOT NULL", matcher.NewSpacedSet([]string{
@@ -268,3 +280,8 @@ var registerKeywordMatcher = parsly.NewToken(registerKeyword, "REGISTER", matche
 var typeKeywordMatcher = parsly.NewToken(typeKeyword, "TYPE", matcher.NewKeyword("type", &option.Case{}))
 
 var ttlKeywordMatcher = parsly.NewToken(ttlKeyword, "With TTL", matcher.NewFragment("with ttl", &option.Case{Sensitive: false}))
+
+var qualifyKeywordMatcher = parsly.NewToken(qualifyKeyword, "QUALIFY", selectionModifier{
+	keywords: matcher.NewKeyword("qualify", &option.Case{}),
+	selector: smatcher.NewSelector(false),
+})

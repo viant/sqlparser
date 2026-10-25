@@ -479,14 +479,7 @@ func TestParseSelect_RankedMetricsWholeQuery(t *testing.T) {
 	}
 	sql := string(data)
 
-	parsed, err := ParseQuery(sql, WithErrorHandler(func(err error, cur *parsly.Cursor, _ interface{}) error {
-		remaining := strings.TrimSpace(string(cur.Input[cur.Pos:]))
-		if strings.HasPrefix(strings.ToUpper(remaining), "QUALIFY ") {
-			cur.Pos = len(cur.Input)
-			return nil
-		}
-		return err
-	}))
+	parsed, err := ParseQuery(sql)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -494,4 +487,18 @@ func TestParseSelect_RankedMetricsWholeQuery(t *testing.T) {
 	actual := strings.TrimSpace(Stringify(parsed))
 	assert.Contains(t, actual, "r'^(?:https?://)?(?:www\\.)?'")
 	assert.Contains(t, actual, "ORDER BY v.rn")
+	qualifyCount, windowCount := 0, 0
+	Traverse(parsed, func(n node.Node) bool {
+		switch value := n.(type) {
+		case *query.Select:
+			if value.QualifyClause != nil {
+				qualifyCount++
+			}
+		case *expr.Window:
+			windowCount++
+		}
+		return true
+	})
+	assert.Equal(t, 1, qualifyCount)
+	assert.Equal(t, 2, windowCount)
 }

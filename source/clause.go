@@ -74,7 +74,7 @@ func HasTopLevelClause(source, clause string) bool {
 
 func CriteriaBoundary(source string) int {
 	boundary := len(source)
-	for _, keyword := range []string{"group by", "having", "order by", "limit", "offset", "union", "intersect", "except", "fetch", "for update"} {
+	for _, keyword := range []string{"group by", "having", "qualify", "order by", "limit", "offset", "union", "intersect", "except", "fetch", "for update"} {
 		if pos := FindTopLevelKeyword(source, keyword, 0); pos >= 0 && pos < boundary {
 			boundary = pos
 		}
