@@ -45,3 +45,13 @@ func TestMySQLMatchAgainstRejectsMalformed(t *testing.T) {
 		})
 	}
 }
+
+func TestMySQLMatchAgainstTransformPreservesMode(t *testing.T) {
+	SQL := "SELECT MATCH(title) AGAINST('hotel' COLLATE utf8mb4_bin IN BOOLEAN MODE) AS score FROM docs"
+	stripped, err := StripCollate(SQL)
+	require.NoError(t, err)
+	require.NotContains(t, stripped, "COLLATE")
+	require.Contains(t, stripped, "IN BOOLEAN MODE")
+	_, err = ParseQuery(stripped, WithStructuralValidation())
+	require.NoError(t, err)
+}

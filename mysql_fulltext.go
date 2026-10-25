@@ -40,6 +40,7 @@ func parseMatchAgainst(cursor *parsly.Cursor, operand node.Node) (node.Node, err
 		}
 	}
 	searchText := inner
+	modeText := ""
 	if modeIndex >= 0 {
 		searchText = inner[:modeIndex]
 		modeCursor := parsly.NewCursor(cursor.Path, []byte(inner[modeIndex:]), 0)
@@ -55,7 +56,8 @@ func parseMatchAgainst(cursor *parsly.Cursor, operand node.Node) (node.Node, err
 			}
 			words = append(words, strings.ToUpper(word.Text(modeCursor)))
 		}
-		switch strings.Join(words, " ") {
+		modeText = strings.Join(words, " ")
+		switch modeText {
 		case "IN NATURAL LANGUAGE MODE", "IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION", "IN BOOLEAN MODE", "WITH QUERY EXPANSION":
 		default:
 			return nil, fmt.Errorf("invalid AGAINST search mode")
@@ -69,6 +71,11 @@ func parseMatchAgainst(cursor *parsly.Cursor, operand node.Node) (node.Node, err
 	skipExpressionSpace(searchCursor)
 	if search == nil || searchCursor.Pos != len(searchCursor.Input) {
 		return nil, fmt.Errorf("invalid AGAINST search expression")
+	}
+	if modeText != "" {
+		// Keep the suffix in the semantic tree as well as Raw. Transforms that
+		// rebuild parentheses must not silently drop the selected search mode.
+		search = &expr.Binary{X: search, Op: modeText}
 	}
 	cursor.Pos = tail.Pos
 	return applyCollate(cursor, &expr.Binary{X: operand, Op: "AGAINST", Y: &expr.Parenthesis{Raw: raw, X: search}})
