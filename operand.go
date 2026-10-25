@@ -16,6 +16,10 @@ func expectOperand(cursor *parsly.Cursor) (node.Node, error) {
 	if err != nil || operand == nil {
 		return operand, err
 	}
+	operand, err = parseMatchAgainst(cursor, operand)
+	if err != nil {
+		return nil, err
+	}
 	for {
 		tail := *cursor
 		skipExpressionSpace(&tail)

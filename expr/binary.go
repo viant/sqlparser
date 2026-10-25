@@ -58,6 +58,8 @@ func binaryPrecedence(op string) int {
 		return 10
 	case "||":
 		return 11
+	case "AGAINST":
+		return 12
 	default:
 		return 0
 	}
