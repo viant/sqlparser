@@ -317,9 +317,12 @@ func matchPostFrom(cursor *parsly.Cursor, dest *query.Select, match *parsly.Toke
 		if dest.Window == nil {
 			dest.Window = expr.NewRaw(matchedText)
 		}
-		match = cursor.MatchAfterOptional(whitespaceMatcher, intLiteralMatcher)
-		if match.Code == intLiteral {
+		match = cursor.MatchAfterOptional(whitespaceMatcher, intLiteralMatcher, placeholderMatcher)
+		if match.Code == intLiteral || match.Code == placeholderTokenCode {
 			literal := expr.NewNumericLiteral(match.Text(cursor))
+			if match.Code == placeholderTokenCode {
+				literal.Kind = "placeholder"
+			}
 			switch strings.ToLower(matchedText) {
 			case "limit":
 				if dest.Limit != nil {
