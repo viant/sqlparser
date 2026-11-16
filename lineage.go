@@ -1,10 +1,11 @@
 package sqlparser
 
 import (
+	"strings"
+
 	"github.com/viant/sqlparser/expr"
 	"github.com/viant/sqlparser/node"
 	"github.com/viant/sqlparser/query"
-	"strings"
 )
 
 // ColumnOrigin is parser-proven direct table/column provenance.
@@ -50,32 +51,25 @@ func (l Lineage) Columns() map[string]ColumnOrigin {
 	return result
 }
 func (l Lineage) RootTable() string       { return l.Compile().RootTable() }
-func (l Lineage) Compile() *ColumnLineage { return l.compile(map[*query.Select]bool{}) }
-func (l Lineage) compile(active map[*query.Select]bool) *ColumnLineage {
+func (l Lineage) Compile() *ColumnLineage { return l.compile(nil, map[*query.Select]bool{}) }
+func (l Lineage) compile(ctes map[string]*ColumnLineage, active map[*query.Select]bool) *ColumnLineage {
 	result := &ColumnLineage{direct: map[string]ColumnOrigin{}, blocked: map[string]bool{}, excluded: map[string]bool{}}
-	if l.Query == nil || l.Query.Union != nil || l.Query.WithRecursive || active[l.Query] {
+	if l.Query == nil || l.Query.Union != nil || active[l.Query] {
 		result.opaque = true
 		return result
 	}
 	active[l.Query] = true
 	defer delete(active, l.Query)
-	root := l.source(l.Query.From.X, active)
+	ctes = l.cteScope(ctes, active)
+	root := lineageOfSource(l.Query.From.X, ctes, active)
 	result.root = root.table
-	alias := l.Query.From.Alias
-	if alias == "" {
-		alias = root.table
-	}
-	sources := map[string]lineageSource{strings.ToLower(alias): root}
+	sources := map[string]lineageSource{lineageQualifier(l.Query.From.Alias, l.Query.From.X, root): root}
 	for _, join := range l.Query.Joins {
 		if join == nil {
 			continue
 		}
-		source := l.source(join.With, active)
-		alias := join.Alias
-		if alias == "" {
-			alias = source.table
-		}
-		key := strings.ToLower(alias)
+		source := lineageOfSource(join.With, ctes, active)
+		key := lineageQualifier(join.Alias, join.With, source)
 		if _, exists := sources[key]; exists {
 			sources[key] = lineageSource{}
 		} else {
@@ -84,7 +78,7 @@ func (l Lineage) compile(active map[*query.Select]bool) *ColumnLineage {
 	}
 	sourceFor := func(namespace string) lineageSource {
 		if namespace != "" {
-			return sources[strings.ToLower(namespace)]
+			return sources[lineageName(namespace)]
 		}
 		if len(sources) == 1 {
 			for _, source := range sources {
@@ -130,7 +124,9 @@ func (l Lineage) compile(active map[*query.Select]bool) *ColumnLineage {
 			}
 			continue
 		}
-		column := NewColumn(item)
+		// NewColumn fills inferred metadata on its input item.
+		itemCopy := *item
+		column := NewColumn(&itemCopy)
 		if column == nil {
 			continue
 		}
@@ -187,24 +183,166 @@ func (s lineageSource) lookup(name string) (ColumnOrigin, bool) {
 	}
 	return ColumnOrigin{}, false
 }
-func (l Lineage) source(n node.Node, active map[*query.Select]bool) lineageSource {
+
+func (l Lineage) cteScope(inherited map[string]*ColumnLineage, active map[*query.Select]bool) map[string]*ColumnLineage {
+	if len(l.Query.WithSelects) == 0 {
+		return inherited
+	}
+	scope := make(map[string]*ColumnLineage, len(inherited)+len(l.Query.WithSelects))
+	for name, cte := range inherited {
+		scope[name] = cte
+	}
+	opaque := &ColumnLineage{opaque: true}
+	declared := map[string]int{}
+	unresolved := map[string]bool{}
+	for _, cte := range l.Query.WithSelects {
+		name := lineageName(cte.Alias)
+		declared[name]++
+		if _, exists := scope[name]; !exists || l.Query.WithRecursive {
+			// Recursive local names shadow inherited names throughout the WITH.
+			// An unresolved local name must not be inferred as a physical table.
+			scope[name] = opaque
+		}
+		if l.Query.WithRecursive {
+			unresolved[name] = true
+		}
+	}
+	for _, cte := range l.Query.WithSelects {
+		name := lineageName(cte.Alias)
+		if declared[name] > 1 {
+			scope[name] = opaque
+			continue
+		}
+		if l.Query.WithRecursive {
+			self, pending := lineageCTEReferences(cte.X, name, unresolved)
+			if pending {
+				// A forward dependency may be part of a cycle. Keep this
+				// name unresolved for later definitions that depend on it.
+				scope[name] = opaque
+				continue
+			}
+			delete(unresolved, name)
+			if self {
+				scope[name] = opaque
+				continue
+			}
+		}
+		scope[name] = (Lineage{Query: cte.X}).compile(scope, active)
+	}
+	return scope
+}
+
+// lineageCTEReferences finds self and unresolved sibling references in one
+// scoped traversal, including sources outside the projection's provenance.
+func lineageCTEReferences(statement *query.Select, ownName string, unresolved map[string]bool) (self, pending bool) {
+	shadowed := map[string]int{}
+	active := map[*query.Select]bool{}
+	var check func(*query.Select)
+	check = func(selected *query.Select) {
+		if selected == nil || pending {
+			return
+		}
+		if active[selected] {
+			pending = true
+			return
+		}
+		active[selected] = true
+		defer delete(active, selected)
+
+		var localNames []string
+		shadow := func(alias string) {
+			name := lineageName(alias)
+			if unresolved[name] {
+				shadowed[name]++
+				localNames = append(localNames, name)
+			}
+		}
+		if selected.WithRecursive {
+			for _, cte := range selected.WithSelects {
+				shadow(cte.Alias)
+			}
+		}
+		for _, cte := range selected.WithSelects {
+			check(cte.X)
+			if !selected.WithRecursive {
+				shadow(cte.Alias)
+			}
+		}
+
+		Traverse(selected, func(n node.Node) bool {
+			if pending {
+				return false
+			}
+			var source node.Node
+			switch actual := n.(type) {
+			case *query.WithSelect:
+				return false // Already checked in lexical declaration order.
+			case *query.Select:
+				if actual != selected {
+					check(actual)
+					return false
+				}
+			case *query.From:
+				source = actual.X
+			case *query.Join:
+				source = actual.With
+			}
+			if ident, ok := source.(*expr.Ident); ok {
+				name := lineageName(ident.Name)
+				if unresolved[name] && shadowed[name] == 0 {
+					if name == ownName {
+						self = true
+					} else {
+						pending = true
+					}
+				}
+			}
+			return !pending
+		})
+		for _, name := range localNames {
+			shadowed[name]--
+		}
+	}
+	check(statement)
+	return self, pending
+}
+
+func lineageQualifier(alias string, n node.Node, source lineageSource) string {
+	if alias == "" {
+		if named, ok := n.(*expr.Ident); ok {
+			alias = named.Name
+		} else {
+			alias = source.table
+		}
+	}
+	return lineageName(alias)
+}
+
+func lineageName(name string) string {
+	if name == "" {
+		return ""
+	}
+	return strings.ToLower(trimEnclosure(name))
+}
+
+func lineageOfSource(n node.Node, ctes map[string]*ColumnLineage, active map[*query.Select]bool) lineageSource {
 	switch value := n.(type) {
 	case *expr.Ident:
-		if selected := l.Query.WithSelects.Select(value.Name); selected != nil {
-			return lineageSource{projection: (Lineage{Query: selected.X}).compile(active)}
+		if cte, ok := ctes[lineageName(value.Name)]; ok {
+			return lineageSource{projection: cte}
 		}
 		return lineageSource{table: value.Name}
 	case *expr.Selector:
 		return lineageSource{table: TableName(&query.Select{From: query.From{X: value}})}
 	case *expr.Raw:
 		if selected, ok := value.X.(*query.Select); ok {
-			return lineageSource{projection: (Lineage{Query: selected}).compile(active)}
+			return lineageSource{projection: (Lineage{Query: selected}).compile(ctes, active)}
 		}
 	case *query.Select:
-		return lineageSource{projection: (Lineage{Query: value}).compile(active)}
+		return lineageSource{projection: (Lineage{Query: value}).compile(ctes, active)}
 	case *expr.Parenthesis:
 		if selected, ok := value.X.(*query.Select); ok {
-			return lineageSource{projection: (Lineage{Query: selected}).compile(active)}
+			return lineageSource{projection: (Lineage{Query: selected}).compile(ctes, active)}
 		}
 	}
 	return lineageSource{}
